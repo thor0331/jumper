@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email - JumperJunction</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #080a0f;
+      --bg2: #0d0f17;
+      --surface: #111420;
+      --surface2: #181c2a;
+      --border: #1e2235;
+      --border2: #252a3d;
+      --text: #eef3ff;
+      --muted: #99a8c7;
+      --green: #3dffa0;
+      --red: #ff6b7a;
+      --display: 'Syne', sans-serif;
+      --body: 'Instrument Sans', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 15px;
+      line-height: 1.6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body[data-theme="light"] {
+      --bg: #f4f7fb; --bg2: #e8edf5; --surface: #ffffff; --surface2: #f4f7fb;
+      --border: #d7deea; --border2: #bcc7d9; --text: #0f1726; --muted: #43516c;
+    }
+    .container {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+    h1 {
+      font-family: var(--display);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 1.5rem;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-family: var(--mono);
+      margin-bottom: 12px;
+      font-size: 18px;
+      text-align: center;
+      letter-spacing: 6px;
+    }
+    input:focus { outline: 1px solid var(--green); }
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: var(--green);
+      color: #000;
+      border-radius: 8px;
+      font-weight: 700;
+      font-family: var(--body);
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    .btn-secondary {
+      width: 100%;
+      padding: 10px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      font-weight: 600;
+      font-family: var(--body);
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 0.75rem;
+    }
+    .bottom-link {
+      margin-top: 1rem;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .bottom-link a { color: var(--text); text-decoration: underline; }
+    #verify-status {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 1rem;
+      min-height: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Verify Your Email</h1>
+    <p id="verify-message">Enter the 6-digit code sent to your email.</p>
+    <input type="text" id="otp" placeholder="000000" maxlength="6" autocomplete="one-time-code">
+    <button class="btn-primary" onclick="handleVerify()">Verify Code</button>
+    <button class="btn-secondary" onclick="resendCode()">Resend Code</button>
+    <div class="bottom-link">Return to <a href="login.html">Sign In</a></div>
+    <div id="verify-status"></div>
+  </div>
+
+  <script>
+    const THEME_KEY = 'jumper-junction_theme';
+    const SUPABASE_URL = 'https://wbriqxebdkuqbtcvxtgv.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndicmlxeGViZGt1cWJ0Y3Z4dGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNTA4MTksImV4cCI6MjA5MTgyNjgxOX0._e1mILmLqzbAfgSsAGWzAez5v6Z7RHNR564O4yfJFN0';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function applyTheme(theme) {
+      const resolved = theme === 'light' ? 'light' : 'dark';
+      document.body.dataset.theme = resolved;
+      localStorage.setItem(THEME_KEY, resolved);
+    }
+    applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+
+    function setVerifyStatus(msg, tone) {
+      const el = document.getElementById('verify-status');
+      el.textContent = msg;
+      el.style.color = tone === 'error' ? 'var(--red)' : tone === 'success' ? 'var(--green)' : 'var(--muted)';
+    }
+
+    function getPostLoginTarget(defaultTarget = '/') {
+      const target = sessionStorage.getItem('jj_post_login_target');
+      if (target) {
+        sessionStorage.removeItem('jj_post_login_target');
+        return target;
+      }
+      return defaultTarget;
+    }
+
+    let pendingEmail = sessionStorage.getItem('jj_pending_signup_email') || '';
+
+    async function initVerify() {
+      const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''));
+      const type = hashParams.get('type');
+
+      if (type === 'signup') {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+          setVerifyStatus('Email confirmed. Redirecting...', 'success');
+          setTimeout(() => location.href = getPostLoginTarget('/'), 800);
+          return;
+        }
+      }
+
+      if (!pendingEmail) {
+        setVerifyStatus('Missing signup email. Please start from Create Account.', 'error');
+        return;
+      }
+      document.getElementById('verify-message').textContent = `Enter the 6-digit code sent to ${pendingEmail}.`;
+    }
+
+    async function handleVerify() {
+      if (!pendingEmail) return;
+      const token = document.getElementById('otp').value.trim();
+      if (token.length !== 6) return setVerifyStatus('Enter a valid 6-digit code.', 'error');
+      setVerifyStatus('Verifying...', 'muted');
+      const { error } = await supabaseClient.auth.verifyOtp({
+        email: pendingEmail,
+        token,
+        type: 'signup'
+      });
+      if (error) return setVerifyStatus(error.message, 'error');
+      setVerifyStatus('Verified. Redirecting...', 'success');
+      setTimeout(() => location.href = getPostLoginTarget('/'), 800);
+    }
+
+    async function resendCode() {
+      if (!pendingEmail) return;
+      setVerifyStatus('Resending code...', 'muted');
+      const { error } = await supabaseClient.auth.resend({
+        type: 'signup',
+        email: pendingEmail
+      });
+      if (error) return setVerifyStatus(error.message, 'error');
+      setVerifyStatus('Code resent. Check your inbox.', 'success');
+    }
+
+    initVerify();
+  </script>
+<script src="uiverse-buttons.js"></script>
+</body>
+</html>

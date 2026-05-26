@@ -1,0 +1,106 @@
+(function() {
+  const css = `
+    .btn-primary, .btn-outline {
+      outline: none !important;
+      cursor: pointer !important;
+      border: none !important;
+      padding: 0.9rem 2rem !important;
+      margin: 0;
+      font-family: inherit !important;
+      font-size: 15px !important;
+      position: relative;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: 0.05rem;
+      font-weight: 700 !important;
+      border-radius: 500px !important;
+      overflow: hidden;
+      background: #66ff66 !important;
+      color: ghostwhite !important;
+      box-shadow: none !important;
+      text-decoration: none !important;
+    }
+    
+    .btn-outline {
+      background: var(--surface2) !important;
+    }
+
+    .btn-primary .uiverse-span, .btn-outline .uiverse-span {
+      position: relative;
+      z-index: 10;
+      transition: color 0.4s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary:hover .uiverse-span, .btn-outline:hover .uiverse-span {
+      color: black !important;
+    }
+
+    .btn-primary::before, .btn-outline::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 120%;
+      height: 100%;
+      z-index: 0;
+      background: #000 !important;
+      transform: skew(30deg);
+      left: -10%;
+      transition: transform 0.4s cubic-bezier(0.3, 1, 0.8, 1);
+    }
+    
+    [data-theme="light"] .btn-primary::before, [data-theme="light"] .btn-outline::before {
+      background: #111420 !important; /* Slightly visible on light mode */
+    }
+
+    .btn-primary:hover::before, .btn-outline:hover::before {
+      transform: translate3d(100%, 0, 0);
+    }
+  `;
+
+  const style = document.createElement('style');
+  style.innerHTML = css;
+  document.head.appendChild(style);
+
+  function wrapButtons() {
+    document.querySelectorAll('.btn-primary, .btn-outline').forEach(btn => {
+      if (!btn.querySelector('.uiverse-span')) {
+        const span = document.createElement('span');
+        span.className = 'uiverse-span';
+        span.innerHTML = btn.innerHTML;
+        btn.innerHTML = '';
+        btn.appendChild(span);
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wrapButtons);
+  } else {
+    wrapButtons();
+  }
+
+  const observer = new MutationObserver((mutations) => {
+    let shouldWrap = false;
+    for (let m of mutations) {
+      if (m.addedNodes.length > 0) {
+        shouldWrap = true;
+        break;
+      }
+    }
+    if (shouldWrap) wrapButtons();
+  });
+  
+  if (document.body) {
+    observer.observe(document.body, { childList: true, subtree: true });
+  } else {
+    document.addEventListener('DOMContentLoaded', () => {
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+  }
+})();

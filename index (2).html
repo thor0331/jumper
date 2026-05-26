@@ -1,0 +1,470 @@
+const VISITS_PENDING_KEY = 'site-total-visits-pending';
+const VISITS_LAST_SYNC_KEY = 'site-total-visits-last-sync';
+const VISITS_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const DEVELOPER_USER_PREFIX = 'developer-user:';
+const DEVELOPER_SESSION_PREFIX = 'developer-session:';
+const DEVELOPER_SESSION_TTL_SECONDS = 12 * 60 * 60;
+
+export default {
+  async fetch(request, env) {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders(env) });
+    }
+
+    try {
+      const url = new URL(request.url);
+
+      if (url.pathname === '/visits' && request.method === 'GET') {
+        return json({ ok: true, value: await getPublicVisitTotal(env) }, 200, env);
+      }
+
+      if (url.pathname === '/visits/hit' && request.method === 'POST') {
+        return json({ ok: true, value: await registerVisit(env) }, 200, env);
+      }
+
+      if (url.pathname === '/developer-auth/login' && request.method === 'POST') {
+        const body = await request.json();
+        const session = await loginDeveloper(env, body.username, body.password);
+        return json({ ok: true, ...session }, 200, env);
+      }
+
+      if (url.pathname === '/developers' && request.method === 'GET') {
+        authorizeAdmin(request, env);
+        return json({ ok: true, developers: await listDevelopers(env) }, 200, env);
+      }
+
+      if (url.pathname === '/developers' && request.method === 'POST') {
+        authorizeAdmin(request, env);
+        const body = await request.json();
+        const developer = await upsertDeveloper(env, body);
+        return json({ ok: true, developer }, 200, env);
+      }
+
+      if (url.pathname === '/developers/delete' && request.method === 'POST') {
+        authorizeAdmin(request, env);
+        const body = await request.json();
+        const username = normalizeUsername(body.username);
+        if (!username) return json({ message: 'Username is required.' }, 400, env);
+        await env.VISITOR_STATS.delete(`${DEVELOPER_USER_PREFIX}${username}`);
+        return json({ ok: true }, 200, env);
+      }
+
+      if (url.pathname === '/health' && request.method === 'GET') {
+        authorizeAdmin(request, env);
+        return json({
+          ok: true,
+          repo: `${env.GITHUB_OWNER}/${env.GITHUB_REPO}`,
+          branch: env.GITHUB_BRANCH || 'main'
+        }, 200, env);
+      }
+
+      if (url.pathname === '/projects' && request.method === 'GET') {
+        await authorizeRequest(request, env, { allowDeveloper: true });
+        const branch = url.searchParams.get('branch') || env.GITHUB_BRANCH || 'main';
+        return json({ ok: true, db: await getProjectDatabase(env, branch) }, 200, env);
+      }
+
+      if (url.pathname === '/projects' && request.method === 'POST') {
+        const auth = await authorizeRequest(request, env, { allowDeveloper: true });
+        const body = await request.json();
+        const branch = body.branch || env.GITHUB_BRANCH || 'main';
+        const message = body.message || 'Update projects.json via JumperJunction backend';
+        const nextDb = body.db;
+
+        if (!nextDb || typeof nextDb !== 'object') {
+          return json({ message: 'Invalid project database payload.' }, 400, env);
+        }
+
+        let payloadDb = nextDb;
+        if (auth.role === 'developer') {
+          const currentDb = await getProjectDatabase(env, branch);
+          payloadDb = enforceDeveloperScope(currentDb, nextDb, auth);
+        }
+
+        const response = await saveProjectDatabase(env, branch, payloadDb, message);
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          return json({ message: error.message || 'GitHub update failed.' }, response.status, env);
+        }
+
+        const data = await response.json();
+        return json({
+          ok: true,
+          commitSha: data.commit?.sha || '',
+          contentSha: data.content?.sha || ''
+        }, 200, env);
+      }
+
+      return json({ message: 'Not found.' }, 404, env);
+    } catch (error) {
+      const status = error instanceof HttpError ? error.status : 500;
+      return json({ message: error.message || 'Unexpected server error.' }, status, env);
+    }
+  }
+};
+
+function authorizeAdmin(request, env) {
+  const adminKey = request.headers.get('X-Admin-Key');
+  if (!env.ADMIN_API_KEY || adminKey !== env.ADMIN_API_KEY) {
+    throw new HttpError('Unauthorized.', 401);
+  }
+  validateOrigin(request, env);
+  return { role: 'admin', username: 'admin', displayName: 'Primary Admin' };
+}
+
+async function authorizeRequest(request, env, options = {}) {
+  try {
+    return authorizeAdmin(request, env);
+  } catch (error) {
+    if (!(options.allowDeveloper && error instanceof HttpError && error.status === 401)) {
+      throw error;
+    }
+  }
+
+  validateOrigin(request, env);
+  const authHeader = request.headers.get('Authorization') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  if (!token) throw new HttpError('Unauthorized.', 401);
+  return getDeveloperSession(env, token);
+}
+
+function normalizeOrigin(v){
+  if(!v) return '';
+  try{ const u=new URL(v.trim().replace(/\/+$/,'')); return `${u.protocol}//${u.host}`.toLowerCase(); }
+  catch{ return v.trim().replace(/\/+$/,'').toLowerCase(); }
+}
+
+function validateOrigin(request, env) {
+  if (!env.ALLOWED_ORIGIN) return;
+  const provided = request.headers.get('Origin') || request.headers.get('X-Site-Origin') || '';
+  if (!provided) return;
+  if (normalizeOrigin(provided) !== normalizeOrigin(env.ALLOWED_ORIGIN)) {
+    throw new HttpError('Origin not allowed.', 403);
+  }
+}
+
+async function loginDeveloper(env, username, password) {
+  const normalizedUsername = normalizeUsername(username);
+  if (!normalizedUsername || !password) {
+    throw new HttpError('Username and password are required.', 400);
+  }
+
+  const developer = await getDeveloperUser(env, normalizedUsername);
+  if (!developer) throw new HttpError('Invalid username or password.', 401);
+
+  const ok = await verifyPassword(password, developer.password);
+  if (!ok) throw new HttpError('Invalid username or password.', 401);
+
+  const token = crypto.randomUUID();
+  const session = {
+    username: developer.username,
+    displayName: developer.displayName || developer.username,
+    role: 'developer',
+    expiresAt: Date.now() + DEVELOPER_SESSION_TTL_SECONDS * 1000
+  };
+  await env.VISITOR_STATS.put(
+    `${DEVELOPER_SESSION_PREFIX}${token}`,
+    JSON.stringify(session),
+    { expirationTtl: DEVELOPER_SESSION_TTL_SECONDS }
+  );
+  return { token, user: session };
+}
+
+async function getDeveloperSession(env, token) {
+  const raw = await env.VISITOR_STATS.get(`${DEVELOPER_SESSION_PREFIX}${token}`);
+  if (!raw) throw new HttpError('Unauthorized.', 401);
+  const session = JSON.parse(raw);
+  if (!session.expiresAt || session.expiresAt < Date.now()) {
+    throw new HttpError('Session expired.', 401);
+  }
+  return session;
+}
+
+async function listDevelopers(env) {
+  const keys = await env.VISITOR_STATS.list({ prefix: DEVELOPER_USER_PREFIX });
+  const users = [];
+  for (const item of keys.keys) {
+    const raw = await env.VISITOR_STATS.get(item.name);
+    if (!raw) continue;
+    const developer = JSON.parse(raw);
+    users.push({
+      username: developer.username,
+      displayName: developer.displayName || developer.username,
+      createdAt: developer.createdAt || ''
+    });
+  }
+  users.sort((a, b) => a.username.localeCompare(b.username));
+  return users;
+}
+
+async function upsertDeveloper(env, payload) {
+  const username = normalizeUsername(payload.username);
+  const password = String(payload.password || '');
+  const displayName = String(payload.displayName || username).trim();
+
+  if (!username || !password) {
+    throw new HttpError('Developer username and password are required.', 400);
+  }
+  if (password.length < 8) {
+    throw new HttpError('Developer password must be at least 8 characters.', 400);
+  }
+
+  const developer = {
+    username,
+    displayName: displayName || username,
+    password: await hashPassword(password),
+    createdAt: new Date().toISOString()
+  };
+  await env.VISITOR_STATS.put(`${DEVELOPER_USER_PREFIX}${username}`, JSON.stringify(developer));
+  return { username: developer.username, displayName: developer.displayName, createdAt: developer.createdAt };
+}
+
+async function getDeveloperUser(env, username) {
+  const raw = await env.VISITOR_STATS.get(`${DEVELOPER_USER_PREFIX}${username}`);
+  return raw ? JSON.parse(raw) : null;
+}
+
+function normalizeUsername(value) {
+  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+}
+
+async function hashPassword(password) {
+  const salt = bytesToBase64(crypto.getRandomValues(new Uint8Array(16)));
+  return {
+    salt,
+    hash: await sha256(`${salt}:${password}`)
+  };
+}
+
+async function verifyPassword(password, saved) {
+  if (!saved || !saved.salt || !saved.hash) return false;
+  return (await sha256(`${saved.salt}:${password}`)) === saved.hash;
+}
+
+function enforceDeveloperScope(currentDb, nextDb, auth) {
+  const current = cloneJson(currentDb);
+  const submitted = cloneJson(nextDb);
+
+  if (!Array.isArray(submitted.boards) || !Array.isArray(submitted.projects)) {
+    throw new HttpError('Invalid project database payload.', 400);
+  }
+
+  const currentBoards = new Map((current.boards || []).map(board => [board.id, board]));
+  const submittedBoards = new Map((submitted.boards || []).map(board => [board.id, board]));
+  for (const [boardId, existingBoard] of currentBoards.entries()) {
+    const nextBoard = submittedBoards.get(boardId);
+    const boardOwner = normalizeUsername(existingBoard.ownerUsername);
+    const developerOwnsBoard = boardOwner && boardOwner === auth.username;
+    if (!nextBoard) {
+      if (!developerOwnsBoard) {
+        throw new HttpError('Developers cannot delete boards owned by others.', 403);
+      }
+      continue;
+    }
+    if (!developerOwnsBoard && JSON.stringify(nextBoard) !== JSON.stringify(existingBoard)) {
+      throw new HttpError('Developers cannot change boards owned by others.', 403);
+    }
+  }
+
+  submitted.boards = submitted.boards.map(board => {
+    const existing = currentBoards.get(board.id);
+    if (existing) {
+      const boardOwner = normalizeUsername(existing.ownerUsername);
+      if (!boardOwner || boardOwner !== auth.username) {
+        return existing;
+      }
+      return { ...board, ownerUsername: auth.username };
+    }
+    return { ...board, ownerUsername: auth.username };
+  });
+
+  const currentProjects = new Map((current.projects || []).map(project => [project.id, project]));
+  const submittedProjects = new Map((submitted.projects || []).map(project => [project.id, project]));
+
+  for (const [projectId, existingProject] of currentProjects.entries()) {
+    const ownerUsername = normalizeUsername(existingProject.ownerUsername);
+    const nextProject = submittedProjects.get(projectId);
+    if (ownerUsername && ownerUsername !== auth.username) {
+      if (!nextProject) throw new HttpError('Developers cannot delete projects owned by others.', 403);
+      if (JSON.stringify(nextProject) !== JSON.stringify(existingProject)) {
+        throw new HttpError('Developers cannot edit projects owned by others.', 403);
+      }
+    }
+    if (!ownerUsername) {
+      if (!nextProject) throw new HttpError('Developers cannot delete unowned projects.', 403);
+      if (JSON.stringify(nextProject) !== JSON.stringify(existingProject)) {
+        throw new HttpError('Developers cannot edit unowned projects.', 403);
+      }
+    }
+  }
+
+  submitted.projects = submitted.projects.map(project => {
+    const existing = currentProjects.get(project.id);
+    if (existing) {
+      const ownerUsername = normalizeUsername(existing.ownerUsername);
+      if (ownerUsername === auth.username) {
+        return stampProjectOwnership(project, auth);
+      }
+      return existing;
+    }
+    return stampProjectOwnership(project, auth);
+  });
+
+  submitted.meta = current.meta || {};
+  return submitted;
+}
+
+function stampProjectOwnership(project, auth) {
+  return {
+    ...project,
+    ownerUsername: auth.username,
+    ownerDisplayName: auth.displayName || auth.username
+  };
+}
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new HttpError(error.message || 'Could not load projects.json from GitHub.', response.status);
+  }
+
+  return response.json();
+}
+
+async function getProjectDatabase(env, branch) {
+  const file = await getRepoFile(env, branch);
+  const decoded = decodeBase64Utf8(file.content || '');
+  return JSON.parse(decoded);
+}
+
+async function saveProjectDatabase(env, branch, db, message) {
+  const currentFile = await getRepoFile(env, branch, true);
+  const content = encodeUtf8Base64(JSON.stringify(db, null, 2));
+  const payload = { message, content, branch };
+  if (currentFile?.sha) payload.sha = currentFile.sha;
+
+  return githubFetch(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/projects.json`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
+async function getPendingVisitCount(env) {
+  ensureKv(env);
+  const value = Number(await env.VISITOR_STATS.get(VISITS_PENDING_KEY));
+  return Number.isFinite(value) && value >= 0 ? value : 0;
+}
+
+async function getLastVisitSyncAt(env) {
+  ensureKv(env);
+  const value = Number(await env.VISITOR_STATS.get(VISITS_LAST_SYNC_KEY));
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+async function maybeSyncVisits(env) {
+  const pendingVisits = await getPendingVisitCount(env);
+  if (pendingVisits <= 0) return null;
+
+  const branch = env.GITHUB_BRANCH || 'main';
+  const db = await getProjectDatabase(env, branch);
+  const meta = db && typeof db.meta === 'object' && db.meta ? db.meta : {};
+  const storedSyncAt = Date.parse(meta.visitsSyncedAt || '');
+  const kvLastSyncAt = await getLastVisitSyncAt(env);
+  const lastSyncAt = Math.max(Number.isFinite(storedSyncAt) ? storedSyncAt : 0, kvLastSyncAt);
+  if (lastSyncAt && Date.now() - lastSyncAt < VISITS_SYNC_INTERVAL_MS) return null;
+
+  const currentTotal = Number(meta.totalVisits || 0);
+  const safeCurrentTotal = Number.isFinite(currentTotal) && currentTotal >= 0 ? currentTotal : 0;
+  const nextTotal = safeCurrentTotal + pendingVisits;
+  db.meta = {
+    ...meta,
+    totalVisits: nextTotal,
+    visitsSyncedAt: new Date().toISOString()
+  };
+
+  const response = await saveProjectDatabase(env, branch, db, `Sync JumperJunction visits (${pendingVisits} new visitors)`);
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new HttpError(error.message || 'Failed to sync visits to GitHub.', response.status);
+  }
+
+  await env.VISITOR_STATS.put(VISITS_PENDING_KEY, '0');
+  await env.VISITOR_STATS.put(VISITS_LAST_SYNC_KEY, String(Date.now()));
+  return nextTotal;
+}
+
+async function getPublicVisitTotal(env) {
+  const syncedTotal = await getSyncedVisitTotal(env);
+  const pendingVisits = await getPendingVisitCount(env);
+  return syncedTotal + pendingVisits;
+}
+
+async function getSyncedVisitTotal(env) {
+  const db = await getProjectDatabase(env, env.GITHUB_BRANCH || 'main');
+  const total = Number(db && db.meta ? db.meta.totalVisits : 0);
+  return Number.isFinite(total) && total >= 0 ? total : 0;
+}
+
+async function registerVisit(env) {
+  ensureKv(env);
+  const pendingVisits = await getPendingVisitCount(env);
+  await env.VISITOR_STATS.put(VISITS_PENDING_KEY, String(pendingVisits + 1));
+  const syncedTotal = await maybeSyncVisits(env);
+  if (typeof syncedTotal === 'number') return syncedTotal;
+  return getPublicVisitTotal(env);
+}
+
+function ensureKv(env) {
+  if (!env.VISITOR_STATS) {
+    throw new HttpError('Cloudflare KV binding VISITOR_STATS is not configured.', 503);
+  }
+}
+
+function corsHeaders(env) {
+  const origin = env.ALLOWED_ORIGIN ? normalizeOrigin(env.ALLOWED_ORIGIN) : '*';
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type,X-Admin-Key,X-Site-Origin,Authorization'
+  };
+}
+
+function json(data, status, env) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      ...corsHeaders(env)
+    }
+  });
+}
+
+function encodeUtf8Base64(value) {
+  return btoa(unescape(encodeURIComponent(value)));
+}
+
+function decodeBase64Utf8(value) {
+  return decodeURIComponent(escape(atob((value || '').replace(/\n/g, ''))));
+}
+
+async function sha256(text) {
+  const bytes = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function bytesToBase64(bytes) {
+  let binary = '';
+  bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+  return btoa(binary);
+}
+
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value || {}));
+}
+
+class HttpError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.status = status;
+  }
+}

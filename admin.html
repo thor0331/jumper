@@ -1,0 +1,2402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BYLLSY2990"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-BYLLSY2990');
+  </script>
+  <meta name="google-site-verification" content="HGNls9zIHckqixDYlmV9I-IKEdwRQBj1IWSNIQHXL0o" />
+  <title>Admin Panel — JumperJunction</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Instrument+Sans:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080a0f;
+      --bg2: #0d0f17;
+      --surface: #111420;
+      --surface2: #181c2a;
+      --border: #1e2235;
+      --border2: #252a3d;
+      --text: #eef3ff;
+      --muted: #99a8c7;
+      --muted2: #7382a4;
+      --green: #3dffa0;
+      --blue: #5eb8ff;
+      --amber: #ffb340;
+      --red: #ff6b7a;
+      --purple: #b57bff;
+      --display: 'Syne', sans-serif;
+      --body: 'Instrument Sans', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 14px;
+      line-height: 1.6
+    }
+
+    body.admin-locked {
+      overflow: hidden
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit
+    }
+
+    input,
+    textarea,
+    select {
+      font-family: var(--body);
+      font-size: 14px
+    }
+
+    body[data-theme="light"] {
+      --bg: #f4f7fb;
+      --bg2: #e8edf5;
+      --surface: #ffffff;
+      --surface2: #f4f7fb;
+      --border: #d7deea;
+      --border2: #bcc7d9;
+      --text: #0f1726;
+      --muted: #43516c;
+      --muted2: #62708a;
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(8, 10, 15, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border)
+    }
+
+    body[data-theme="light"] nav {
+      background: rgba(244, 247, 251, 0.95)
+    }
+
+    .nav-logo {
+      font-family: var(--display);
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--green);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #000;
+      font-weight: 700
+    }
+
+    .nav-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(255, 107, 122, 0.1);
+      border: 1px solid rgba(255, 107, 122, 0.3);
+      color: var(--red);
+      letter-spacing: 0.05em
+    }
+
+    .theme-toggle {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 7px 12px;
+      cursor: pointer;
+      transition: all 0.2s
+    }
+
+    .theme-toggle:hover {
+      color: var(--text);
+      border-color: var(--muted)
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+      padding-top: 60px
+    }
+
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 1rem;
+      position: sticky;
+      top: 60px;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    .sidebar-section {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted2);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.75rem 0.75rem 0.25rem;
+      margin-top: 0.5rem
+    }
+
+    .sidebar-section:first-child {
+      margin-top: 0
+    }
+
+    .sidebar-btn {
+      width: 100%;
+      text-align: left;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: none;
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 13px;
+      font-family: var(--body);
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .sidebar-btn:hover {
+      background: var(--surface2);
+      color: var(--text)
+    }
+
+    .sidebar-btn.active {
+      background: var(--surface2);
+      color: var(--text);
+      border-left: 2px solid var(--green)
+    }
+
+    .sidebar-btn .icon {
+      font-size: 15px;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0
+    }
+
+    .proj-sidebar-item {
+      width: 100%;
+      text-align: left;
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: none;
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      font-family: var(--mono);
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .proj-sidebar-item:hover {
+      background: var(--surface2);
+      color: var(--text)
+    }
+
+    .proj-sidebar-item .board-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    .sidebar-add {
+      width: 100%;
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border)
+    }
+
+    .btn-add {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px dashed var(--border2);
+      background: none;
+      color: var(--green);
+      font-family: var(--mono);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.05em
+    }
+
+    .btn-add:hover {
+      background: rgba(61, 255, 160, 0.05);
+      border-color: var(--green)
+    }
+
+    .main {
+      padding: 2rem
+    }
+
+    .view {
+      display: none
+    }
+
+    .view.active {
+      display: block
+    }
+
+    .config-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      max-width: 600px
+    }
+
+    .config-card h2 {
+      font-family: var(--display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem
+    }
+
+    .form-row {
+      margin-bottom: 1rem
+    }
+
+    label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px
+    }
+
+    input[type=text],
+    input[type=password],
+    textarea,
+    select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s
+    }
+
+    input[type=text]:focus,
+    input[type=password]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--border2)
+    }
+
+    input[type=text]::placeholder,
+    textarea::placeholder {
+      color: var(--muted2)
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.8
+    }
+
+    select option {
+      background: var(--surface2)
+    }
+
+    .btn-save {
+      padding: 10px 28px;
+      background: var(--green);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-family: var(--display);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.02em
+    }
+
+    .btn-save:hover {
+      background: #5affc0
+    }
+
+    .btn-secondary {
+      padding: 10px 20px;
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--body)
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--muted)
+    }
+
+    .btn-danger {
+      padding: 8px 16px;
+      background: rgba(255, 107, 122, 0.1);
+      border: 1px solid rgba(255, 107, 122, 0.3);
+      color: var(--red);
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--mono)
+    }
+
+    .btn-danger:hover {
+      background: rgba(255, 107, 122, 0.2)
+    }
+
+    .editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem
+    }
+
+    .editor-header h2 {
+      font-family: var(--display);
+      font-size: 1.4rem;
+      font-weight: 700
+    }
+
+    .editor-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center
+    }
+
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem
+    }
+
+    .editor-grid .full {
+      grid-column: 1/-1
+    }
+
+    .tabs-editor {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem
+    }
+
+    .tabs-editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem
+    }
+
+    .tabs-editor-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em
+    }
+
+    .btn-add-tab {
+      padding: 6px 14px;
+      border: 1px dashed var(--border2);
+      border-radius: 6px;
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 11px;
+      transition: all 0.2s
+    }
+
+    .btn-add-tab:hover {
+      color: var(--green);
+      border-color: var(--green)
+    }
+
+    .tab-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 0.75rem
+    }
+
+    .tab-item-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap
+    }
+
+    .tab-item-header .remove-tab {
+      margin-left: auto;
+      padding: 4px 10px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted2);
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 10px;
+      transition: all 0.2s
+    }
+
+    .tab-item-header .remove-tab:hover {
+      color: var(--red);
+      border-color: var(--red)
+    }
+
+    .tab-label-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: var(--mono);
+      width: 130px
+    }
+
+    .tab-type-select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: var(--mono)
+    }
+
+    .wire-table-editor th {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      padding: 4px 8px;
+      text-align: left
+    }
+
+    .wire-table-editor td {
+      padding: 4px
+    }
+
+    .wire-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: var(--mono)
+    }
+
+    .wire-del {
+      padding: 4px 8px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted2);
+      cursor: pointer;
+      font-size: 11px;
+      font-family: var(--mono)
+    }
+
+    .wire-del:hover {
+      color: var(--red);
+      border-color: var(--red)
+    }
+
+    .btn-add-row {
+      padding: 6px 12px;
+      border: 1px dashed var(--border2);
+      border-radius: 6px;
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 11px;
+      margin-top: 8px;
+      transition: all 0.2s
+    }
+
+    .btn-add-row:hover {
+      color: var(--blue);
+      border-color: var(--blue)
+    }
+
+    .parts-editor {
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .part-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+      align-items: center
+    }
+
+    .part-row.single {
+      grid-template-columns: 1fr auto
+    }
+
+    .part-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: var(--mono)
+    }
+
+    .helper-text {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px
+    }
+
+    .diagram-tools {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 1rem
+    }
+
+    .diagram-preview {
+      margin-top: 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--surface)
+    }
+
+    .diagram-preview img {
+      display: block;
+      width: 100%;
+      max-height: 340px;
+      object-fit: contain;
+      background: var(--bg2)
+    }
+
+    .diagram-meta {
+      padding: 0.75rem 0.9rem;
+      border-top: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
+    .tip-editor {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      align-items: center;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border)
+    }
+
+    .tip-type-select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: var(--mono)
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      z-index: 999;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s;
+      pointer-events: none
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1
+    }
+
+    .toast.success {
+      background: rgba(61, 255, 160, 0.15);
+      border: 1px solid rgba(61, 255, 160, 0.4);
+      color: var(--green)
+    }
+
+    .toast.error {
+      background: rgba(255, 107, 122, 0.15);
+      border: 1px solid rgba(255, 107, 122, 0.4);
+      color: var(--red)
+    }
+
+    .proj-list-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: all 0.2s
+    }
+
+    .proj-list-card:hover {
+      border-color: var(--border2)
+    }
+
+    .proj-list-info {
+      flex: 1
+    }
+
+    .proj-list-title {
+      font-family: var(--display);
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 3px
+    }
+
+    .proj-list-meta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted)
+    }
+
+    .proj-list-actions {
+      display: flex;
+      gap: 6px
+    }
+
+    .btn-edit {
+      padding: 6px 14px;
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s
+    }
+
+    .btn-edit:hover {
+      color: var(--text);
+      border-color: var(--muted)
+    }
+
+    .board-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap
+    }
+
+    .board-item input[type=color] {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: none;
+      padding: 0
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 520px;
+      width: 100%
+    }
+
+    .modal h3 {
+      font-family: var(--display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem
+    }
+
+    .modal p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 1.5rem;
+      line-height: 1.8
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 1.5rem
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 1rem
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--green);
+      width: 0%;
+      transition: width 0.4s;
+      border-radius: 4px
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 2rem
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem
+    }
+
+    .stat-num {
+      font-family: var(--display);
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1
+    }
+
+    .stat-lbl {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em
+    }
+
+    /* LOCK SCREEN */
+    .admin-shell {
+      display: block
+    }
+
+    body.admin-locked .admin-shell {
+      display: none
+    }
+
+    .admin-lock {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: radial-gradient(circle at top, rgba(61, 255, 160, 0.07), transparent 35%), rgba(8, 10, 15, 0.97)
+    }
+
+    body.admin-locked .admin-lock {
+      display: flex
+    }
+
+    .lock-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 18px;
+      padding: 2rem;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5)
+    }
+
+    .lock-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      border: 1px solid;
+      border-radius: 999px;
+      margin-bottom: 1rem
+    }
+
+    .lock-badge.admin {
+      color: var(--green);
+      border-color: rgba(61, 255, 160, 0.3)
+    }
+
+    .lock-badge.developer {
+      color: var(--blue);
+      border-color: rgba(94, 184, 255, 0.3)
+    }
+
+    .lock-card h1 {
+      font-family: var(--display);
+      font-size: 2rem;
+      line-height: 1.1;
+      margin-bottom: 0.5rem
+    }
+
+    .lock-card p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+      margin-bottom: 1.25rem
+    }
+
+    .lock-note {
+      min-height: 20px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      margin-top: 0.5rem
+    }
+
+    .lock-error {
+      min-height: 20px;
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 11px;
+      margin-top: 0.5rem
+    }
+
+    .lock-shortcut-hint {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted2);
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      text-align: center
+    }
+
+    @media(max-width:768px) {
+      .layout {
+        grid-template-columns: 1fr
+      }
+
+      .sidebar {
+        display: none
+      }
+
+      .editor-grid {
+        grid-template-columns: 1fr
+      }
+    }
+  </style>
+</head>
+
+<body class="admin-locked">
+
+  <!-- LOCK SCREEN: mode controlled by JS, shows admin OR developer panel -->
+  <div class="admin-lock" id="admin-lock">
+    <div class="lock-card">
+
+      <!-- ADMIN PANEL -->
+      <div id="lock-admin-panel">
+        <div class="lock-badge admin">Primary Admin</div>
+        <h1>Admin Panel</h1>
+        <p>Enter your admin password to unlock. On first use, create a strong password for this device.</p>
+        <div class="form-row">
+          <label for="admin-password">Password</label>
+          <input type="password" id="admin-password" placeholder="Enter admin password" autocomplete="current-password">
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <a href="index.html" class="btn-secondary">Back to Site</a>
+          <button class="btn-save" type="button" id="admin-submit-btn" onclick="unlockAdmin()">Unlock Admin</button>
+        </div>
+        <div class="lock-note" id="admin-lock-note"></div>
+      </div>
+
+      <!-- DEVELOPER PANEL -->
+      <div id="lock-dev-panel" style="display:none">
+        <div class="lock-badge developer">Developer Login</div>
+        <h1>Developer Panel</h1>
+        <p>Log in with the credentials your admin created for you.</p>
+        <div class="form-row">
+          <label for="developer-username">Developer ID</label>
+          <input type="text" id="developer-username" placeholder="your developer id" autocomplete="username">
+        </div>
+        <div class="form-row">
+          <label for="developer-password">Developer Password</label>
+          <input type="password" id="developer-password" placeholder="Your password" autocomplete="current-password">
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <a href="index.html" class="btn-secondary">Back to Site</a>
+          <button class="btn-save" type="button" onclick="loginDeveloper()"
+            style="background:var(--blue);color:#000">Login</button>
+        </div>
+      </div>
+
+      <div class="lock-error" id="lock-error"></div>
+
+    </div>
+  </div>
+
+  <div class="admin-shell">
+    <nav>
+      <a href="https://jumperjunction.codes/" class="nav-logo">
+        <div class="logo-icon">JJ</div>
+        <span>JumperJunction Admin</span>
+      </a>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="theme-toggle" id="theme-toggle" type="button" onclick="toggleTheme()">Theme: Dark</button>
+        <span class="nav-badge" id="role-badge">ADMIN</span>
+        <a href="index.html"
+          style="font-family:var(--mono);font-size:12px;color:var(--muted);padding:6px 14px;border:1px solid var(--border);border-radius:20px;transition:all 0.2s"
+          onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--muted)'">← View Site</a>
+      </div>
+    </nav>
+
+    <div class="layout">
+      <div class="sidebar">
+        <span class="sidebar-section">Navigation</span>
+        <button class="sidebar-btn active" onclick="showView('dashboard',this)"><span
+            class="icon">◈</span>Dashboard</button>
+        <button class="sidebar-btn" onclick="showView('projects-list',this)"><span class="icon">≡</span>All
+          Projects</button>
+        <button class="sidebar-btn" onclick="showView('boards-mgr',this)"><span class="icon">⬡</span>Manage
+          Boards</button>
+        <button class="sidebar-btn" id="btn-developers-nav" onclick="showView('developers',this)"><span
+            class="icon">⌘</span>Developers</button>
+        <button class="sidebar-btn" onclick="showView('settings',this)"><span class="icon">⚙</span>Settings</button>
+        <span class="sidebar-section">Projects</span>
+        <div id="sidebar-projects"></div>
+        <div class="sidebar-add">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn-add" onclick="newProject()">+ New Project</button>
+            <button class="btn-add" onclick="newProject(true)">+ New Premium Project</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="main">
+
+        <!-- DASHBOARD -->
+        <div class="view active" id="view-dashboard">
+          <h2 style="font-family:var(--display);font-size:1.5rem;font-weight:700;margin-bottom:0.5rem">Dashboard</h2>
+          <p style="color:var(--muted);margin-bottom:2rem;font-size:13px">Manage your JumperJunction project archive
+            and live database</p>
+          <div id="draft-restore-banner" style="display:none;background:rgba(94,184,255,0.08);border:1px solid rgba(94,184,255,0.22);border-radius:14px;padding:1rem 1.1rem;margin-bottom:1rem">
+            <div style="font-family:var(--display);font-size:1rem;margin-bottom:0.35rem">Local draft restored</div>
+            <p style="color:var(--muted);font-size:13px;line-height:1.8">A saved draft was found on this device and loaded into your dashboard so refresh or accidental close does not lose your work.</p>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem 1.1rem;margin-bottom:1.2rem">
+            <div style="font-family:var(--display);font-size:1rem;margin-bottom:0.35rem">Monthly archive workflow</div>
+            <p style="color:var(--muted);font-size:13px;line-height:1.8">1. Publish current projects to the live DB. 2. Use Export Live DB. 3. Merge that JSON into your archive <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">projects.json</code>. 4. Deploy the updated archive. 5. Then remove old month items from the live DB only if you want to reduce KV usage.</p>
+          </div>
+          <div class="stats-grid" id="dash-stats"></div>
+          <div
+            style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;max-width:600px">
+            <h3 style="font-family:var(--display);font-size:1rem;font-weight:600;margin-bottom:0.75rem">Quick Actions
+            </h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn-save" onclick="newProject()">+ New Project</button>
+                <button class="btn-secondary" onclick="newProject(true)">+ New Premium Project</button>
+              </div>
+              <button class="btn-secondary" onclick="openPushModal()">Publish Changes</button>
+              <button class="btn-secondary" onclick="loadFromBackend()">Sync Data</button>
+              <button class="btn-secondary" onclick="exportLiveDb()">Export Live DB</button>
+              <a href="index.html" target="_blank"><button class="btn-secondary">Preview Site ↗</button></a>
+            </div>
+            <div id="last-saved" style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:1rem">
+            </div>
+          </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="view" id="view-settings">
+          <h2 style="font-family:var(--display);font-size:1.5rem;font-weight:700;margin-bottom:0.5rem">Global Settings</h2>
+          <p style="color:var(--muted);margin-bottom:2rem;font-size:13px">Manage site-wide configurations and emergency locks.</p>
+
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;max-width:600px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <h3 style="font-family:var(--display);font-size:1rem;font-weight:600;margin-bottom:0.25rem;color:var(--red)">Lock Premium Projects</h3>
+              <p style="color:var(--muted);font-size:12px">Hides all premium content and disables checkout platform-wide.</p>
+            </div>
+            <label style="position:relative;display:inline-block;width:48px;height:24px">
+              <input type="checkbox" id="setting-premium-lock" onchange="saveGlobalSettings()" style="opacity:0;width:0;height:0">
+              <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--border);border-radius:24px;transition:.4s"></span>
+              <span id="setting-premium-lock-slider" style="position:absolute;content:'';height:16px;width:16px;left:4px;bottom:4px;background-color:var(--text);border-radius:50%;transition:.4s"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- PROJECTS LIST -->
+        <div class="view" id="view-projects-list">
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+            <div>
+              <h2 style="font-family:var(--display);font-size:1.4rem;font-weight:700">All Projects</h2>
+              <p style="color:var(--muted);font-size:13px;margin-top:3px">Click a project to edit it</p>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn-save" onclick="newProject()">+ New Project</button>
+              <button class="btn-secondary" onclick="newProject(true)">+ New Premium Project</button>
+            </div>
+          </div>
+          <div id="proj-list-container"></div>
+        </div>
+
+        <!-- PROJECT EDITOR -->
+        <div class="view" id="view-editor">
+          <div class="editor-header">
+            <div>
+              <h2 id="editor-title">New Project</h2>
+              <p style="color:var(--muted);font-size:13px;margin-top:3px">Fill in all fields, save your draft, then publish when ready
+              </p>
+            </div>
+            <div class="editor-actions">
+              <button class="btn-danger" id="btn-delete-proj" onclick="deleteProject()"
+                style="display:none">Delete</button>
+              <button class="btn-secondary" onclick="showView('projects-list')">Cancel</button>
+              <button class="btn-save" onclick="saveProject()">Save Project</button>
+            </div>
+          </div>
+          <div
+            style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem">
+            <div
+              style="font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:1rem">
+              Basic Info</div>
+            <div class="editor-grid">
+              <div><label>Project ID (slug, no spaces)</label><input type="text" id="ed-id" placeholder="blink-led">
+              </div>
+              <div><label>Title</label><input type="text" id="ed-title" placeholder="Blink LED"></div>
+              <div class="full"><label>Description</label><input type="text" id="ed-desc"
+                  placeholder="Short description shown on cards..."></div>
+              <div><label>Board</label><select id="ed-board"></select></div>
+              <div><label>Difficulty</label><select id="ed-difficulty">
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="pro">Pro</option>
+                  <option value="funbuild">FunBuild</option>
+                  <option value="complex">Complex</option>
+                </select></div>
+              <div class="full">
+                <label>Components + Buy Links</label>
+                <div id="parts-container" class="parts-editor"></div>
+                <button class="btn-add-row" type="button" onclick="addPartRow()">+ Add Component</button>
+                <div class="helper-text">Add a component name and optional buy link (opens in a new tab).</div>
+              </div>
+              <div class="full"><label>What they learn (short summary)</label><input type="text" id="ed-learns"
+                  placeholder="pinMode, digitalWrite, delay, uploading code"></div>
+              <div><label>Credit Name</label><input type="text" id="ed-credit-name" placeholder="Project creator name">
+              </div>
+              <div><label>YouTube Video Link</label><input type="text" id="ed-video-url"
+                  placeholder="https://youtube.com/watch?v=..."></div>
+              <div><label>Credit Profile Link</label><input type="text" id="ed-credit-url"
+                  placeholder="https://example.com/profile"></div>
+              <div><label>GitHub Repository Link</label><input type="text" id="ed-github-url"
+                  placeholder="https://github.com/username/repo"></div>
+              <div><label>Owner Username</label><input type="text" id="ed-owner-username"
+                  placeholder="auto for developers"></div>
+              <div><label>Project Type</label>
+                <select id="ed-is-premium" onchange="updatePremiumFields()">
+                  <option value="false">Free Project</option>
+                  <option value="true">Premium / Paid Project</option>
+                </select>
+              </div>
+              <div id="ed-price-container" style="display:none"><label>Price (USD)</label><input type="number" id="ed-price" placeholder="9.99" step="0.01" min="0"></div>
+              <div id="ed-premium-benefits" class="full" style="display:none">
+                <label>Premium Benefits (what buyers get)</label>
+                <div id="benefits-container" class="parts-editor"></div>
+                <button class="btn-add-row" type="button" onclick="addBenefitRow()">+ Add Benefit</button>
+                <div class="helper-text">Shown only for premium projects.</div>
+              </div>
+              
+              <div class="full"><label>License Policy Summary</label><input type="text" id="ed-license-summary"
+                  placeholder="Example: Free for learning and personal use only. Review full license below."></div>
+              <div class="full"><label>Optional License Text</label><textarea id="ed-license-text"
+                  placeholder="Optional project license or usage text"></textarea></div>
+            </div>
+          </div>
+          <div
+            style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem">
+            <div
+              style="font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:1rem">
+              Project Media</div>
+            <div class="form-row">
+              <label>Gallery Images</label>
+              <input type="file" id="ed-gallery-files" accept="image/*" multiple
+                onchange="handleGalleryUpload(this.files)">
+              <p style="font-size:12px;color:var(--muted);margin-top:6px">Upload multiple images. Compressed and stored
+                as base64 in the project data.</p>
+            </div>
+            <div id="gallery-preview"
+              style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px"></div>
+          </div>
+          <div class="tabs-editor">
+            <div class="tabs-editor-header">
+              <span class="tabs-editor-title">Project Tabs</span>
+              <button class="btn-add-tab" onclick="addTab()">+ Add Tab</button>
+            </div>
+            <div id="tabs-container"></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-save" onclick="saveProject()">Save Project</button>
+            <button class="btn-secondary" onclick="saveAndPublish()">Save & Publish</button>
+          </div>
+        </div>
+
+        <!-- BOARDS MANAGER -->
+        <div class="view" id="view-boards-mgr">
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+            <div>
+              <h2 style="font-family:var(--display);font-size:1.4rem;font-weight:700">Manage Boards</h2>
+              <p style="color:var(--muted);font-size:13px;margin-top:3px">Add or remove hardware platforms</p>
+            </div>
+            <button class="btn-save" onclick="addBoard()">+ Add Board</button>
+          </div>
+          <div id="boards-container"></div>
+          <div style="margin-top:1rem;display:flex;gap:8px">
+            <button class="btn-save" onclick="saveBoards()">Save Boards</button>
+            <button class="btn-secondary" onclick="openPushModal()">Publish Changes</button>
+          </div>
+        </div>
+
+        <!-- DEVELOPERS -->
+        <div class="view" id="view-developers">
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+            <div>
+              <h2 style="font-family:var(--display);font-size:1.4rem;font-weight:700">Developers</h2>
+              <p style="color:var(--muted);font-size:13px;margin-top:3px">Create contributor accounts stored securely in
+                Cloudflare KV.</p>
+            </div>
+            <button class="btn-secondary" onclick="loadDevelopers()">Refresh</button>
+          </div>
+          <div class="config-card" style="margin-bottom:1.5rem">
+            <div class="form-row"><label>Developer ID</label><input type="text" id="dev-username"
+                placeholder="new developer id"></div>
+            <div class="form-row"><label>Display Name</label><input type="text" id="dev-display-name"
+                placeholder="Shown in credits and ownership"></div>
+            <div class="form-row"><label>Password</label><input type="password" id="dev-password"
+                placeholder="At least 8 characters"></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn-save" onclick="saveDeveloper()">Save Developer</button>
+              <div id="dev-status" style="font-family:var(--mono);font-size:12px;color:var(--muted)"></div>
+            </div>
+          </div>
+          <div id="developers-container"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PUSH MODAL -->
+    <div class="modal-overlay" id="push-modal">
+      <div class="modal">
+        <h3>Publish Changes</h3>
+        <p>This sends your draft project database to the Cloudflare Worker backend and stores it in the live database.
+          Your local draft backup is cleared after a successful publish.</p>
+        <div class="form-row">
+          <label>Publish note</label>
+          <input type="text" id="commit-msg" value="Publish project updates via JumperJunction admin">
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closePushModal()">Cancel</button>
+          <button class="btn-save" onclick="publishChanges()">Publish Changes</button>
+        </div>
+        <div class="progress-bar" id="push-progress" style="display:none">
+          <div class="progress-fill" id="push-fill"></div>
+        </div>
+        <div id="push-status" style="font-family:var(--mono);font-size:12px;margin-top:0.75rem"></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div><!-- end admin-shell -->
+
+  <script>
+    // ─── CONSTANTS ────────────────────────────────────────────────────────────────
+    // WORKER_URL is public knowledge - developers need it too and don't have localStorage config
+    // Change this to your actual deployed worker URL
+    const WORKER_URL = 'https://jumperjunction-admin-backend.team-jumperjunction.workers.dev';
+    const SITE_ORIGIN = 'https://jumperjunction.codes';
+    const PROJECTS_FILE_CANDIDATES = [
+      'New%20folder%20(6)/projects.json',
+      'projects.json',
+      'New%20folder/projects.json'
+    ];
+
+    const ADMIN_LOCK_KEY = 'jj_admin_lock_v1';      // brute force attempt tracking
+    const CFG_KEY = 'jj_cfg';                // backend URL + branch (non-secret)
+    const THEME_KEY = 'jj_theme';
+    const DRAFT_DB_KEY_PREFIX = 'jj_draft_db_v2';
+
+    const SESSION_TTL_MS = 30 * 60 * 1000;
+    const LOCK_WINDOW_MS = 10 * 60 * 1000;
+    const LOCK_MAX_ATTEMPTS = 5;
+    const LOCK_PENALTY_MS = 30 * 60 * 1000;
+
+    // ─── MEMORY-ONLY STATE ────────────────────────────────────────────────────────
+    // Nothing sensitive ever touches localStorage after these are set
+    let db = { boards: [], projects: [] };  // merged display copy
+    let fileDb = { meta: {}, boards: [], projects: [] };
+    let backendDb = { meta: {}, boards: [], projects: [] };
+    let boardSourceMap = {};
+    let projectSourceMap = {};
+    let editingId = null;
+    let editingTabData = [];
+    let editingGalleryData = [];
+    let authContext = null; // set only after successful login
+    let sessionToken = '';       // admin/developer token - memory only, never stored plain
+    let developerToken = '';     // developer bearer token - memory only, never stored
+    let autoLockTimer = null;
+
+    function emptyDb() { return { meta: {}, boards: [], projects: [] }; }
+    function cloneJson(value) { return JSON.parse(JSON.stringify(value)); }
+    function normalizeDb(value) {
+      const data = value && typeof value === 'object' ? value : {};
+      return {
+        meta: data.meta && typeof data.meta === 'object' ? data.meta : {},
+        boards: Array.isArray(data.boards) ? data.boards : [],
+        projects: Array.isArray(data.projects) ? data.projects : []
+      };
+    }
+    function getDraftStorageKey() {
+      return `${DRAFT_DB_KEY_PREFIX}:${isPrimaryAdmin() ? 'admin' : (norm(authContext?.username) || 'guest')}`;
+    }
+    function loadDraftDb() {
+      try {
+        const raw = localStorage.getItem(getDraftStorageKey());
+        return raw ? normalizeDb(JSON.parse(raw)) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+    function saveDraftDb() {
+      try {
+        localStorage.setItem(getDraftStorageKey(), JSON.stringify(backendDb));
+      } catch (e) { }
+    }
+    function clearDraftDb() {
+      try {
+        localStorage.removeItem(getDraftStorageKey());
+      } catch (e) { }
+    }
+    function mergeDatabases(staticData, liveData) {
+      const archive = normalizeDb(staticData);
+      const live = normalizeDb(liveData);
+      const merged = {
+        meta: {
+          ...(archive.meta || {}),
+          ...(live.meta || {}),
+          counterApiBase: (live.meta && live.meta.counterApiBase) || (archive.meta && archive.meta.counterApiBase) || WORKER_URL
+        },
+        boards: [],
+        projects: []
+      };
+      const boards = new Map();
+      const projects = new Map();
+      const boardSources = {};
+      const projectSources = {};
+
+      archive.boards.forEach(board => {
+        boards.set(board.id, cloneJson(board));
+        boardSources[board.id] = 'file';
+      });
+      live.boards.forEach(board => {
+        boards.set(board.id, cloneJson(board));
+        boardSources[board.id] = 'db';
+      });
+      archive.projects.forEach(project => {
+        projects.set(project.id, cloneJson(project));
+        projectSources[project.id] = 'file';
+      });
+      live.projects.forEach(project => {
+        projects.set(project.id, cloneJson(project));
+        projectSources[project.id] = 'db';
+      });
+
+      merged.boards = Array.from(boards.values()).sort((a, b) => String(a.label || a.id).localeCompare(String(b.label || b.id)));
+      merged.projects = Array.from(projects.values()).sort((a, b) => String(a.title || a.id).localeCompare(String(b.title || b.id)));
+      return { db: merged, boardSources, projectSources };
+    }
+    function refreshMergedState() {
+      const merged = mergeDatabases(fileDb, backendDb);
+      db = merged.db;
+      boardSourceMap = merged.boardSources;
+      projectSourceMap = merged.projectSources;
+      const banner = document.getElementById('draft-restore-banner');
+      if (banner) banner.style.display = loadDraftDb() ? 'block' : 'none';
+      renderSidebar();
+      renderDashboard();
+      populateBoardSelect();
+      if (document.getElementById('view-projects-list')?.classList.contains('active')) renderProjList();
+      if (document.getElementById('view-boards-mgr')?.classList.contains('active')) renderBoardsMgr();
+      if (document.getElementById('view-settings')?.classList.contains('active')) loadGlobalSettings();
+    }
+    async function loadProjectsFile() {
+      for (const path of PROJECTS_FILE_CANDIDATES) {
+        try {
+          const res = await fetch(`${path}?t=${Date.now()}`, { cache: 'no-store' });
+          if (res.ok) return normalizeDb(await res.json());
+        } catch (e) { }
+      }
+      return emptyDb();
+    }
+    function upsertBackendProject(project) {
+      const idx = backendDb.projects.findIndex(item => item.id === project.id);
+      if (idx > -1) backendDb.projects[idx] = project;
+      else backendDb.projects.push(project);
+    }
+    function upsertBackendBoard(board) {
+      const idx = backendDb.boards.findIndex(item => item.id === board.id);
+      if (idx > -1) backendDb.boards[idx] = board;
+      else backendDb.boards.push(board);
+    }
+
+    // ─── THEME ────────────────────────────────────────────────────────────────────
+    function applyTheme(t) {
+      const r = t === 'light' ? 'light' : 'dark';
+      document.body.dataset.theme = r;
+      localStorage.setItem(THEME_KEY, r);
+      const tog = document.getElementById('theme-toggle');
+      if (tog) tog.textContent = `Theme: ${r === 'light' ? 'Light' : 'Dark'}`;
+    }
+    function toggleTheme() { applyTheme(document.body.dataset.theme === 'light' ? 'dark' : 'light'); }
+
+    // ─── LOCK STATE (brute-force protection only) ─────────────────────────────────
+    function getLockState() {
+      try { const d = JSON.parse(localStorage.getItem(ADMIN_LOCK_KEY) || '{}'); return { attempts: Array.isArray(d.attempts) ? d.attempts : [], lockedUntil: Number(d.lockedUntil) || 0 }; } catch (e) { return { attempts: [], lockedUntil: 0 }; }
+    }
+    function saveLockState(s) { localStorage.setItem(ADMIN_LOCK_KEY, JSON.stringify(s)); }
+    function clearLockState() { localStorage.removeItem(ADMIN_LOCK_KEY); }
+    function pruneAttempts(s) { s.attempts = s.attempts.filter(ts => ts > Date.now() - LOCK_WINDOW_MS); return s; }
+
+    // ─── LOCK SCREEN ──────────────────────────────────────────────────────────────
+    function showLockScreen(mode) {
+      // mode: 'admin' | 'developer'
+      authContext = null;
+      developerToken = '';
+      sessionToken = '';
+      document.body.classList.add('admin-locked');
+      document.getElementById('lock-admin-panel').style.display = mode === 'admin' ? '' : 'none';
+      document.getElementById('lock-dev-panel').style.display = mode === 'developer' ? '' : 'none';
+      document.getElementById('lock-error').textContent = '';
+      updateLockNote();
+      if (mode === 'admin') {
+        setTimeout(() => document.getElementById('admin-password')?.focus(), 60);
+      } else {
+        setTimeout(() => document.getElementById('developer-username')?.focus(), 60);
+      }
+    }
+
+    function updateLockNote() {
+      const note = document.getElementById('admin-lock-note');
+      const btn = document.getElementById('admin-submit-btn');
+      const lockState = pruneAttempts(getLockState());
+      saveLockState(lockState);
+      if (note) {
+        if (lockState.lockedUntil > Date.now()) note.textContent = `Locked until ${new Date(lockState.lockedUntil).toLocaleTimeString()}.`;
+        else note.textContent = 'Session auto-locks after 30 min inactivity. If admin password is not set in backend, it will be setup now.';
+      }
+    }
+
+    function scheduleAutoLock() {
+      if (autoLockTimer) clearTimeout(autoLockTimer);
+      autoLockTimer = setTimeout(() => showLockScreen('admin'), SESSION_TTL_MS);
+    }
+
+    function registerActivity() {
+      if (document.body.classList.contains('admin-locked')) return;
+      scheduleAutoLock();
+    }
+
+    function isPrimaryAdmin() { return authContext?.role === 'admin'; }
+    function canManageProject(p) { return isPrimaryAdmin() || norm(p.ownerUsername) === norm(authContext?.username); }
+    function norm(v) { return String(v || '').trim().toLowerCase(); }
+
+    // ─── ADMIN UNLOCK ─────────────────────────────────────────────────────────────
+    async function unlockAdmin() {
+      const input = document.getElementById('admin-password');
+      const error = document.getElementById('lock-error');
+      const value = input.value;
+      const lockState = pruneAttempts(getLockState());
+      saveLockState(lockState);
+      error.textContent = '';
+      if (!value) { error.textContent = 'Password is required.'; return; }
+      if (lockState.lockedUntil > Date.now()) { error.textContent = `Too many failed attempts. Try again after ${new Date(lockState.lockedUntil).toLocaleTimeString()}.`; return; }
+
+      try {
+        let res = await fetch(`${WORKER_URL}/admin-auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Site-Origin': SITE_ORIGIN },
+          body: JSON.stringify({ password: value })
+        });
+
+        // If not setup yet, try to setup.
+        if (res.status === 400) {
+          const data = await res.json();
+          if (data.message === 'Admin not setup yet.') {
+            const setupRes = await fetch(`${WORKER_URL}/admin-auth/setup`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Site-Origin': SITE_ORIGIN },
+              body: JSON.stringify({ password: value })
+            });
+            if (!setupRes.ok) {
+              const setupData = await setupRes.json().catch(() => ({}));
+              throw new Error(setupData.message || 'Setup failed.');
+            }
+            res = await fetch(`${WORKER_URL}/admin-auth/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Site-Origin': SITE_ORIGIN },
+              body: JSON.stringify({ password: value })
+            });
+          } else {
+            throw new Error(data.message || 'Admin login failed.');
+          }
+        } else if (!res.ok) {
+          lockState.attempts.push(Date.now());
+          pruneAttempts(lockState);
+          if (lockState.attempts.length >= LOCK_MAX_ATTEMPTS) lockState.lockedUntil = Date.now() + LOCK_PENALTY_MS;
+          saveLockState(lockState);
+          updateLockNote();
+          throw new Error('Incorrect password.');
+        }
+
+        const data = await res.json();
+        clearLockState();
+        sessionToken = data.token;
+        authContext = data.user || { role: 'admin', username: 'admin', displayName: 'Primary Admin' };
+        input.value = '';
+
+        document.body.classList.remove('admin-locked');
+        scheduleAutoLock();
+        loadConfigForm();
+        updateRoleUI();
+        loadFromBackend(true);
+      } catch (e) {
+        error.textContent = e.message || 'Unable to unlock admin.';
+        input.select();
+      }
+    }
+
+    // ─── DEVELOPER LOGIN ──────────────────────────────────────────────────────────
+    async function loginDeveloper() {
+      const username = document.getElementById('developer-username').value.trim();
+      const password = document.getElementById('developer-password').value;
+      const error = document.getElementById('lock-error');
+      error.textContent = '';
+      if (!username || !password) { error.textContent = 'Developer ID and password are required.'; return; }
+      try {
+        // WORKER_URL is hardcoded - works on any device, no config needed
+        const res = await fetch(`${WORKER_URL}/developer-auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Site-Origin': SITE_ORIGIN },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || 'Developer login failed.');
+        // Store token in memory ONLY - never in localStorage or sessionStorage
+        developerToken = data.token;
+        authContext = data.user || { role: 'developer', username, displayName: username };
+        document.getElementById('developer-username').value = '';
+        document.getElementById('developer-password').value = '';
+        error.textContent = '';
+        document.body.classList.remove('admin-locked');
+        scheduleAutoLock();
+        updateRoleUI();
+        showToast(`Welcome, ${authContext.displayName || authContext.username}!`);
+        // Load DB fresh from backend
+        loadFromBackend(true);
+      } catch (e) {
+        let msg = e.message || 'Developer login failed.';
+        if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror')) {
+          msg = 'Cannot reach the backend worker. Check that it is deployed at: ' + WORKER_URL;
+        }
+        error.textContent = msg;
+      }
+    }
+
+    function updateRoleUI() {
+      const devBtn = document.getElementById('btn-developers-nav');
+      const roleBadge = document.getElementById('role-badge');
+      if (devBtn) devBtn.style.display = isPrimaryAdmin() ? '' : 'none';
+      if (roleBadge) roleBadge.textContent = isPrimaryAdmin() ? 'ADMIN' : 'DEVELOPER';
+      if (!isPrimaryAdmin()) {
+        const active = document.querySelector('.view.active')?.id;
+        if (active === 'view-developers') showView('dashboard');
+      }
+    }
+
+    // ─── CONFIG ───────────────────────────────────────────────────────────────────
+    function loadConfig() {
+      return { backendUrl: WORKER_URL, siteOrigin: SITE_ORIGIN, branch: 'main', token: sessionToken };
+    }
+    async function saveConfig() {
+      showToast('Backend config is fixed in code for this site.');
+    }
+    function clearStoredToken() {
+      sessionToken = '';
+      showToast('Session cleared.', 'success');
+      setTimeout(() => location.reload(), 1000);
+    }
+    function loadConfigForm() {
+      const cfg = loadConfig();
+      const backendEl = document.getElementById('cfg-backend-url');
+      const siteEl = document.getElementById('cfg-site-origin');
+      const branchEl = document.getElementById('cfg-branch');
+      const tokenEl = document.getElementById('cfg-token');
+      if (backendEl) backendEl.value = cfg.backendUrl || '';
+      if (siteEl) siteEl.value = cfg.siteOrigin || '';
+      if (branchEl) branchEl.value = cfg.branch || 'main';
+      if (tokenEl) {
+        tokenEl.value = cfg.token ? '*** (Active Session)' : '';
+        tokenEl.disabled = true;
+      }
+    }
+
+    // ─── BACKEND REQUEST ──────────────────────────────────────────────────────────
+    async function backendRequest(path, options = {}) {
+      const cfg = loadConfig();
+      const url = cfg.backendUrl || WORKER_URL;
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(cfg.siteOrigin ? { 'X-Site-Origin': cfg.siteOrigin } : {}),
+        ...(options.headers || {})
+      };
+      if (isPrimaryAdmin()) {
+        if (!cfg.token) throw new Error('Not authenticated. Please log in again.');
+        headers['X-Admin-Key'] = cfg.token;
+      } else if (developerToken) {
+        headers['Authorization'] = `Bearer ${developerToken}`;
+      } else {
+        throw new Error('Not authenticated. Please log in again.');
+      }
+      const res = await fetch(`${url}${path}`, {
+        method: options.method || 'GET',
+        headers,
+        body: options.body ? JSON.stringify(options.body) : undefined
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || `Request failed (${res.status})`);
+      return data;
+    }
+
+    // ─── VIEWS ────────────────────────────────────────────────────────────────────
+    function showView(id, btn) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-' + id).classList.add('active');
+      if (btn) { document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+      if (id === 'projects-list') renderProjList();
+      if (id === 'boards-mgr') renderBoardsMgr();
+      if (id === 'developers') loadDevelopers();
+      if (id === 'dashboard') renderDashboard();
+    }
+
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = 'toast show ' + type;
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    // ─── DASHBOARD ────────────────────────────────────────────────────────────────
+    function renderDashboard() {
+      const s = document.getElementById('dash-stats');
+      const byDiff = d => db.projects.filter(p => p.difficulty === d).length;
+      const mine = db.projects.filter(p => norm(p.ownerUsername) === norm(authContext?.username)).length;
+      s.innerHTML = [
+        { n: db.projects.length, l: 'Total Projects', c: 'var(--green)' },
+        { n: db.boards.length, l: 'Boards', c: 'var(--blue)' },
+        { n: byDiff('beginner'), l: 'Beginner', c: 'var(--green)' },
+        { n: byDiff('intermediate'), l: 'Intermediate', c: 'var(--amber)' },
+        { n: byDiff('fun'), l: 'Fun Builds', c: 'var(--purple)' },
+        { n: mine, l: isPrimaryAdmin() ? 'Admin Owned' : 'Your Projects', c: 'var(--blue)' },
+      ].map(s => `<div class="stat-card"><div class="stat-num" style="color:${s.c}">${s.n}</div><div class="stat-lbl">${s.l}</div></div>`).join('');
+      document.getElementById('last-saved').textContent = `Logged in as ${isPrimaryAdmin() ? 'Primary Admin' : `Developer ${authContext?.displayName || authContext?.username}`}${loadDraftDb() ? ' · local draft saved' : ''}`;
+    }
+
+    // ─── SIDEBAR PROJECTS ─────────────────────────────────────────────────────────
+    function renderSidebar() {
+      document.getElementById('sidebar-projects').innerHTML = db.projects.map(p => {
+        const board = db.boards.find(b => b.id === p.board);
+        const color = board ? board.color : '#888';
+        const ro = canManageProject(p) ? '' : ' · read only';
+        return `<button class="proj-sidebar-item" onclick="editProject('${p.id}')"><span class="board-dot" style="background:${color}"></span><span style="overflow:hidden;text-overflow:ellipsis">${p.title}${ro}</span></button>`;
+      }).join('');
+    }
+
+    // ─── PROJECTS LIST ────────────────────────────────────────────────────────────
+    function renderProjList() {
+      const c = document.getElementById('proj-list-container');
+      if (!db.projects.length) { c.innerHTML = '<p style="color:var(--muted);font-family:var(--mono);font-size:13px;padding:2rem;text-align:center">No projects yet.</p>'; return; }
+      c.innerHTML = db.projects.map(p => {
+        const board = db.boards.find(b => b.id === p.board);
+        const color = board ? board.color : '#888';
+        const diffLabel = p.difficulty === 'funbuild' ? 'FunBuild' : p.difficulty === 'fun' ? 'Fun Build' : p.difficulty || 'beginner';
+        const canManage = canManageProject(p);
+        return `<div class="proj-list-card">
+      <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div>
+      <div class="proj-list-info">
+        <div class="proj-list-title">${p.title}</div>
+        <div class="proj-list-meta">${board ? board.label : '—'} · ${diffLabel} · ${(p.tabs || []).length} tabs · owner: ${escHtml(p.ownerDisplayName || p.ownerUsername || 'admin')}</div>
+      </div>
+      <div class="proj-list-actions">
+        <button class="btn-edit" onclick="editProject('${p.id}')">Edit</button>
+        ${canManage ? `<button class="btn-outline" style="border-color:var(--amber);color:var(--amber)" onclick="toggleLock('${p.id}')">${p.locked ? 'Unlock' : 'Lock'}</button>
+        <button class="btn-danger" onclick="confirmDelete('${p.id}')">Delete</button>` : ''}
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    // ─── BOARDS MANAGER ───────────────────────────────────────────────────────────
+    function renderBoardsMgr() {
+      document.getElementById('boards-container').innerHTML = db.boards.map((b, i) => {
+        const canEdit = isPrimaryAdmin() || norm(b.ownerUsername) === norm(authContext?.username);
+        const sourceLabel = boardSourceMap[b.id] === 'file' ? 'Archive' : 'Live DB';
+        return `<div class="board-item" data-idx="${i}">
+      <input type="text" class="board-id-input"    value="${b.id}"    style="width:140px;font-family:var(--mono);font-size:12px" ${canEdit ? '' : 'readonly'}>
+      <input type="text" class="board-label-input" value="${b.label}" style="width:140px" ${canEdit ? '' : 'readonly'}>
+      <input type="text" class="board-icon-input"  value="${b.icon}"  style="width:60px;text-align:center" ${canEdit ? '' : 'readonly'}>
+      <input type="color" class="board-color-input" value="${b.color}" ${canEdit ? '' : 'disabled'}>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">${sourceLabel}</span>
+      ${canEdit ? `<button class="btn-danger" onclick="removeBoard(${i})">Remove</button>` : '<span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Read only</span>'}
+    </div>`;
+      }).join('');
+    }
+    function addBoard() {
+      upsertBackendBoard({ id: `new-board-${Date.now()}`, label: 'New Board', icon: '◈', color: '#888888', ownerUsername: isPrimaryAdmin() ? '' : authContext?.username });
+      saveDraftDb();
+      refreshMergedState();
+    }
+    function removeBoard(i) {
+      const board = db.boards[i];
+      if (!board) return;
+      if (!isPrimaryAdmin() && norm(board.ownerUsername) !== norm(authContext?.username)) { showToast('You can only remove boards you created.', 'error'); return; }
+      if (boardSourceMap[board.id] === 'file' && !backendDb.boards.find(item => item.id === board.id)) {
+        showToast('Archive boards can only be removed from projects.json during your monthly update.', 'error');
+        return;
+      }
+      backendDb.boards = backendDb.boards.filter(item => item.id !== board.id);
+      saveDraftDb();
+      refreshMergedState();
+    }
+    function saveBoards() {
+      const cur = [...db.boards];
+      document.querySelectorAll('.board-item').forEach((el, i) => {
+        const ex = cur[i] || {};
+        const canEdit = isPrimaryAdmin() || norm(ex.ownerUsername) === norm(authContext?.username);
+        if (!canEdit) return;
+        upsertBackendBoard({
+          id: el.querySelector('.board-id-input').value.trim(),
+          label: el.querySelector('.board-label-input').value.trim(),
+          icon: el.querySelector('.board-icon-input').value.trim(),
+          color: el.querySelector('.board-color-input').value,
+          ownerUsername: ex.ownerUsername || (isPrimaryAdmin() ? '' : authContext?.username)
+        });
+      });
+      saveDraftDb();
+      refreshMergedState();
+      showToast('Boards saved locally. Click Publish to send them to the live DB.');
+    }
+    function populateBoardSelect() {
+      const sel = document.getElementById('ed-board');
+      if (!sel) return;
+      sel.innerHTML = db.boards.map(b => `<option value="${b.id}">${b.label}</option>`).join('');
+    }
+
+    function toggleLock(id) {
+      const p = db.projects.find(x => x.id === id);
+      if (!p) return;
+      
+      const newLockedState = !p.locked;
+      p.locked = newLockedState;
+      
+      let beProj = backendDb.projects.find(x => x.id === id);
+      if (beProj) {
+        beProj.locked = newLockedState;
+      } else {
+        backendDb.projects.push({ ...p, locked: newLockedState });
+      }
+      
+      saveDraftDb();
+      refreshMergedState();
+      
+      renderProjList();
+      showToast(newLockedState ? 'Project locked locally. Click Publish to apply.' : 'Project unlocked locally. Click Publish to apply.');
+    }
+
+    function updatePremiumFields() {
+      const isPremium = document.getElementById('ed-is-premium').value === 'true';
+      document.getElementById('ed-price-container').style.display = isPremium ? 'block' : 'none';
+      const benefits = document.getElementById('ed-premium-benefits');
+      if (benefits) benefits.style.display = isPremium ? 'block' : 'none';
+    }
+
+    function normalizeParts(parts) {
+      return (Array.isArray(parts) ? parts : []).map(part => {
+        if (typeof part === 'string') return { name: part.trim(), buyUrl: '' };
+        if (part && typeof part === 'object') {
+          return {
+            name: String(part.name || part.label || '').trim(),
+            buyUrl: String(part.buyUrl || part.url || '').trim()
+          };
+        }
+        return null;
+      }).filter(part => part && part.name);
+    }
+
+    function renderPartsEditor(parts) {
+      const container = document.getElementById('parts-container');
+      if (!container) return;
+      container.innerHTML = '';
+      const list = normalizeParts(parts);
+      if (!list.length) {
+        addPartRow();
+        return;
+      }
+      list.forEach(item => addPartRow(item.name, item.buyUrl));
+    }
+
+    function addPartRow(name = '', url = '') {
+      const container = document.getElementById('parts-container');
+      if (!container) return;
+      const row = document.createElement('div');
+      row.className = 'part-row';
+      row.innerHTML = `
+        <input type="text" class="part-input" data-part="name" placeholder="Component name" value="${escHtml(name)}">
+        <input type="text" class="part-input" data-part="url" placeholder="Buy link (optional)" value="${escHtml(url)}">
+        <button type="button" class="wire-del" onclick="this.parentElement.remove()">✕</button>
+      `;
+      container.appendChild(row);
+    }
+
+    function collectPartsFromEditor() {
+      return Array.from(document.querySelectorAll('#parts-container .part-row')).map(row => {
+        const name = row.querySelector('[data-part="name"]').value.trim();
+        const buyUrl = row.querySelector('[data-part="url"]').value.trim();
+        if (!name) return null;
+        return buyUrl ? { name, buyUrl } : { name };
+      }).filter(Boolean);
+    }
+
+    function renderBenefitsEditor(benefits) {
+      const container = document.getElementById('benefits-container');
+      if (!container) return;
+      container.innerHTML = '';
+      const list = Array.isArray(benefits) ? benefits.filter(Boolean) : [];
+      if (!list.length) {
+        addBenefitRow();
+        return;
+      }
+      list.forEach(item => addBenefitRow(item));
+    }
+
+    function addBenefitRow(value = '') {
+      const container = document.getElementById('benefits-container');
+      if (!container) return;
+      const row = document.createElement('div');
+      row.className = 'part-row single';
+      row.innerHTML = `
+        <input type="text" class="part-input" data-benefit="value" placeholder="Benefit description" value="${escHtml(value)}">
+        <button type="button" class="wire-del" onclick="this.parentElement.remove()">✕</button>
+      `;
+      container.appendChild(row);
+    }
+
+    function collectBenefitsFromEditor() {
+      return Array.from(document.querySelectorAll('#benefits-container .part-row')).map(row => {
+        return row.querySelector('[data-benefit="value"]').value.trim();
+      }).filter(Boolean);
+    }
+
+    // ─── PROJECT EDITOR ───────────────────────────────────────────────────────────
+    function newProject(startPremium = false) {
+      editingId = null; editingTabData = []; editingGalleryData = [];
+      document.getElementById('editor-title').textContent = 'New Project';
+      document.getElementById('btn-delete-proj').style.display = 'none';
+      ['ed-id', 'ed-title', 'ed-desc', 'ed-learns', 'ed-credit-url', 'ed-video-url', 'ed-github-url', 'ed-license-text', 'ed-license-summary'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('ed-credit-name').value = authContext?.displayName || '';
+      document.getElementById('ed-owner-username').value = isPrimaryAdmin() ? '' : authContext?.username || '';
+      document.getElementById('ed-is-premium').value = startPremium ? 'true' : 'false';
+      document.getElementById('ed-price').value = startPremium ? '9.99' : '';
+      document.getElementById('ed-difficulty').value = 'beginner';
+      renderPartsEditor([]);
+      renderBenefitsEditor([]);
+      updatePremiumFields();
+      populateBoardSelect(); renderTabsEditor(); renderGalleryPreview(); showView('editor');
+    }
+
+    function editProject(id) {
+      const p = db.projects.find(p => p.id === id);
+      if (!p) return;
+      if (!canManageProject(p) && !isPrimaryAdmin()) { showToast('You can only edit your own projects.', 'error'); return; }
+      editingId = id;
+      // Deep copy so changes don't mutate db until saveProject() is called
+      editingTabData = JSON.parse(JSON.stringify(p.tabs || []));
+      editingGalleryData = JSON.parse(JSON.stringify(p.gallery || []));
+      document.getElementById('editor-title').textContent = 'Edit: ' + p.title;
+      document.getElementById('btn-delete-proj').style.display = canManageProject(p) ? '' : 'none';
+      document.getElementById('ed-id').value = p.id;
+      document.getElementById('ed-title').value = p.title;
+      document.getElementById('ed-desc').value = p.description;
+      document.getElementById('ed-learns').value = p.learns || '';
+      document.getElementById('ed-credit-name').value = p.creditName || p.ownerDisplayName || '';
+      document.getElementById('ed-credit-url').value = p.creditUrl || '';
+      document.getElementById('ed-video-url').value = p.videoUrl || '';
+      document.getElementById('ed-github-url').value = p.githubUrl || '';
+      document.getElementById('ed-license-summary').value = p.licenseSummary || '';
+      document.getElementById('ed-license-text').value = p.licenseText || '';
+      document.getElementById('ed-owner-username').value = p.ownerUsername || '';
+      document.getElementById('ed-is-premium').value = p.isPremium ? 'true' : 'false';
+      document.getElementById('ed-price').value = p.price || '';
+      document.getElementById('ed-difficulty').value = p.difficulty || 'beginner';
+      renderPartsEditor(p.parts || []);
+      renderBenefitsEditor(p.premiumBenefits || []);
+      updatePremiumFields();
+      populateBoardSelect();
+      document.getElementById('ed-board').value = p.board;
+      renderTabsEditor(); renderGalleryPreview(); showView('editor');
+    }
+
+    function deleteProject() {
+      const p = db.projects.find(p => p.id === editingId);
+      if (p && !canManageProject(p)) { showToast('You can only delete your own projects.', 'error'); return; }
+      if (p && projectSourceMap[p.id] === 'file' && !backendDb.projects.find(item => item.id === p.id)) {
+        showToast('Archive projects can only be removed from projects.json during your monthly update.', 'error');
+        return;
+      }
+      backendDb.projects = backendDb.projects.filter(item => item.id !== editingId);
+      saveDraftDb();
+      refreshMergedState();
+      showView('projects-list');
+      showToast('Project removed from live draft.', 'error');
+    }
+    function confirmDelete(id) {
+      const p = db.projects.find(p => p.id === id);
+      if (p && !canManageProject(p)) { showToast('You can only delete your own projects.', 'error'); return; }
+      if (p && projectSourceMap[p.id] === 'file' && !backendDb.projects.find(item => item.id === p.id)) {
+        showToast('Archive projects can only be removed from projects.json during your monthly update.', 'error');
+        return;
+      }
+      if (confirm('Delete this project? This removes it from the live DB draft.')) {
+        backendDb.projects = backendDb.projects.filter(item => item.id !== id);
+        saveDraftDb();
+        refreshMergedState();
+        showToast('Deleted from live draft.', 'error');
+      }
+    }
+
+    function saveProject() {
+      const id = document.getElementById('ed-id').value.trim().replace(/\s+/g, '-').toLowerCase();
+      const title = document.getElementById('ed-title').value.trim();
+      if (!id) { showToast('Project ID is required', 'error'); return; }
+      if (!title) { showToast('Title is required', 'error'); return; }
+      // CRITICAL: collect all DOM changes into editingTabData BEFORE building project object
+      collectTabsFromDOM();
+      const isPremium = document.getElementById('ed-is-premium').value === 'true';
+      const project = {
+        id, title,
+        description: document.getElementById('ed-desc').value.trim(),
+        board: document.getElementById('ed-board').value,
+        difficulty: document.getElementById('ed-difficulty').value,
+        parts: collectPartsFromEditor(),
+        learns: document.getElementById('ed-learns').value.trim(),
+        creditName: document.getElementById('ed-credit-name').value.trim(),
+        creditUrl: document.getElementById('ed-credit-url').value.trim(),
+        videoUrl: document.getElementById('ed-video-url').value.trim(),
+        githubUrl: document.getElementById('ed-github-url').value.trim(),
+        licenseSummary: document.getElementById('ed-license-summary').value.trim(),
+        licenseText: document.getElementById('ed-license-text').value.trim(),
+        ownerUsername: isPrimaryAdmin()
+          ? (document.getElementById('ed-owner-username').value.trim() || '').toLowerCase()
+          : norm(authContext?.username),
+        ownerDisplayName: document.getElementById('ed-credit-name').value.trim() || authContext?.displayName || '',
+        isPremium,
+        price: document.getElementById('ed-price').value.trim(),
+        premiumBenefits: isPremium ? collectBenefitsFromEditor() : [],
+        // Use the in-memory arrays which now have correct state (removed items are gone)
+        gallery: JSON.parse(JSON.stringify(editingGalleryData)),
+        tabs: JSON.parse(JSON.stringify(editingTabData))
+      };
+      if (!isPrimaryAdmin()) {
+        project.ownerUsername = norm(authContext?.username);
+        project.ownerDisplayName = authContext?.displayName || authContext?.username;
+      }
+      upsertBackendProject(project);
+      editingId = id;
+      saveDraftDb();
+      refreshMergedState();
+      document.getElementById('editor-title').textContent = 'Edit: ' + title;
+      document.getElementById('btn-delete-proj').style.display = '';
+      showToast('Project saved locally. Click Publish to send it to the live DB.');
+    }
+
+    function saveAndPublish() {
+      saveProject();
+      openPushModal();
+    }
+
+    // ─── GALLERY ──────────────────────────────────────────────────────────────────
+    function renderGalleryPreview() {
+      const c = document.getElementById('gallery-preview');
+      if (!c) return;
+      if (!editingGalleryData.length) { c.innerHTML = '<p style="color:var(--muted);font-family:var(--mono);font-size:12px">No gallery images added yet.</p>'; return; }
+      c.innerHTML = editingGalleryData.map((img, i) => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+      <img src="${img.dataUrl}" alt="${escHtml(img.name || 'Gallery image')}" style="width:100%;height:120px;object-fit:cover;background:var(--bg2)">
+      <div style="padding:0.75rem">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:0.5rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(img.name || `image-${i + 1}`)}</div>
+        <button class="btn-danger" type="button" onclick="removeGalleryImage(${i})">Remove</button>
+      </div>
+    </div>`).join('');
+    }
+    async function handleGalleryUpload(files) {
+      if (!files || !files.length) return;
+      for (const f of Array.from(files)) { if (!f.type.startsWith('image/')) continue; try { editingGalleryData.push(await compressImageFile(f)); } catch (e) { } }
+      document.getElementById('ed-gallery-files').value = '';
+      renderGalleryPreview();
+    }
+    function removeGalleryImage(i) { editingGalleryData.splice(i, 1); renderGalleryPreview(); }
+
+    // ─── TABS EDITOR ──────────────────────────────────────────────────────────────
+    function renderTabsEditor() {
+      const c = document.getElementById('tabs-container');
+      if (!editingTabData.length) { c.innerHTML = '<p style="color:var(--muted);font-size:13px;text-align:center;padding:1rem;font-family:var(--mono)">No tabs yet. Click + Add Tab.</p>'; return; }
+      c.innerHTML = editingTabData.map((tab, i) => renderTabEditor(tab, i)).join('');
+    }
+    function renderTabEditor(tab, i) {
+      const nt = tab.type === 'table' ? 'wiring' : tab.type;
+      const typeOpts = ['wiring', 'code', 'steps'].map(t => `<option value="${t}"${nt === t ? ' selected' : ''}>${t}</option>`).join('');
+      let html = '';
+      if (nt === 'code') {
+        html = `<div><label style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;display:block">Code</label>
+      <textarea id="tab-code-${i}" style="width:100%;min-height:200px;font-family:var(--mono);font-size:12px;line-height:1.8">${escHtml(tab.content || '')}</textarea></div>`;
+      } else if (nt === 'wiring') {
+        const headers = (tab.headers || ['From', 'To', 'Notes']).join(', ');
+        const headerCells = (tab.headers || ['From', 'To', 'Notes']).map(h => `<th>${escHtml(h)}</th>`).join('');
+        const rows = (tab.rows || []).map((r, ri) => `<tr>${r.map((c, ci) => `<td><input class="wire-input" data-tab="${i}" data-row="${ri}" data-col="${ci}" value="${escHtml(c)}"></td>`).join('')}<td><button class="wire-del" onclick="removeWireRow(${i},${ri})">✕</button></td></tr>`).join('');
+        const diag = tab.diagram || null;
+        const diagPrev = diag && diag.dataUrl ? `<div class="diagram-preview"><img src="${diag.dataUrl}" alt="Circuit diagram preview"><div class="diagram-meta"><span>${escHtml(diag.name || 'circuit-diagram')}</span><span>${formatBytes(diag.size || estimateBase64Size(diag.dataUrl))}</span></div></div>` : '';
+        html = `<div>
+      <div style="margin-bottom:8px"><label style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;display:block">Column Headers</label>
+      <input type="text" id="tab-headers-${i}" value="${escHtml(headers)}" style="font-family:var(--mono);font-size:12px"></div>
+      <table class="wire-table-editor" style="width:100%;border-collapse:collapse;margin-bottom:8px"><thead><tr>${headerCells}<th></th></tr></thead><tbody id="wire-rows-${i}">${rows}</tbody></table>
+      <button class="btn-add-row" onclick="addWireRow(${i})">+ Add Row</button>
+      <div class="diagram-tools">
+        <label style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase">Circuit Diagram</label>
+        <input type="file" id="tab-diagram-${i}" accept="image/*" onchange="handleDiagramUpload(${i},this.files)">
+        ${diag && diag.dataUrl ? `<button type="button" class="btn-secondary" onclick="removeDiagram(${i})">Remove Diagram</button>` : ''}
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:6px">Optional: circuit diagram image stored as base64 in project data.</p>
+      ${diagPrev}</div>`;
+      } else {
+        html = `<div><label style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;display:block">Steps (one per line)</label>
+      <textarea id="tab-steps-${i}" style="width:100%;min-height:120px;font-size:13px;line-height:1.8">${escHtml((tab.steps || []).join('\n'))}</textarea></div>`;
+      }
+      const tip = `<div class="tip-editor">
+    <select id="tab-tiptype-${i}" class="tip-type-select">
+      <option value="tip"${(!tab.tip || tab.tip.type === 'tip') ? ' selected' : ''}>Tip</option>
+      <option value="warn"${tab.tip && tab.tip.type === 'warn' ? ' selected' : ''}>Warning</option>
+      <option value="info"${tab.tip && tab.tip.type === 'info' ? ' selected' : ''}>Info</option>
+      <option value="none"${tab.tip && tab.tip.type === 'none' ? ' selected' : ''}>No tip</option>
+    </select>
+    <input type="text" id="tab-tip-${i}" placeholder="Optional tip text..." value="${escHtml(tab.tip ? tab.tip.text : '')}">
+  </div>`;
+      return `<div class="tab-item" id="tab-item-${i}">
+    <div class="tab-item-header">
+      <input class="tab-label-input" id="tab-label-${i}" value="${escHtml(tab.label || 'Tab')}" placeholder="Tab label">
+      <select class="tab-type-select" id="tab-type-${i}" onchange="changeTabType(${i},this.value)">${typeOpts}</select>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--muted2)">Tab ${i + 1}</span>
+      <button class="remove-tab" onclick="removeTab(${i})">Remove</button>
+    </div>
+    <div id="tab-content-area-${i}">${html}</div>
+    ${tip}
+  </div>`;
+    }
+    function addTab() { collectTabsFromDOM(); editingTabData.push({ id: 'tab-' + Date.now(), label: 'New Tab', type: 'code', content: '' }); renderTabsEditor(); }
+    function removeTab(i) { collectTabsFromDOM(); editingTabData.splice(i, 1); renderTabsEditor(); }
+    function changeTabType(i, type) { collectTabsFromDOM(); editingTabData[i].type = type; renderTabsEditor(); }
+    function addWireRow(i) { collectTabsFromDOM(); if (!editingTabData[i].rows) editingTabData[i].rows = []; editingTabData[i].rows.push(Array((editingTabData[i].headers || ['From', 'To', 'Notes']).length).fill('')); renderTabsEditor(); }
+    function removeWireRow(ti, ri) { collectTabsFromDOM(); editingTabData[ti].rows.splice(ri, 1); renderTabsEditor(); }
+
+    function collectTabsFromDOM() {
+      editingTabData = editingTabData.map((tab, i) => {
+        const label = document.getElementById(`tab-label-${i}`)?.value || tab.label;
+        const type = document.getElementById(`tab-type-${i}`)?.value || (tab.type === 'table' ? 'wiring' : tab.type);
+        const ttType = document.getElementById(`tab-tiptype-${i}`)?.value || 'tip';
+        const ttText = document.getElementById(`tab-tip-${i}`)?.value || '';
+        const tip = (ttType === 'none' || !ttText) ? null : { type: ttType, text: ttText };
+        let content = tab.content, steps = tab.steps, headers = tab.headers, rows = tab.rows;
+        if (type === 'code') content = document.getElementById(`tab-code-${i}`)?.value || '';
+        if (type === 'steps') steps = (document.getElementById(`tab-steps-${i}`)?.value || '').split('\n').filter(s => s.trim());
+        if (type === 'wiring') {
+          const hin = document.getElementById(`tab-headers-${i}`)?.value || 'From,To,Notes';
+          headers = hin.split(',').map(s => s.trim());
+          const map = {};
+          document.querySelectorAll(`[data-tab="${i}"]`).forEach(el => { const r = el.dataset.row, c = el.dataset.col; if (!map[r]) map[r] = []; map[r][c] = el.value; });
+          rows = Object.values(map).map(row => Array.from({ length: headers.length }, (_, idx) => row[idx] || ''));
+        }
+        return { id: tab.id || `tab-${i}`, label, type, content, steps, headers, rows, tip, diagram: tab.diagram || null };
+      });
+    }
+
+    function formatBytes(b) { const v = Number(b) || 0; if (v < 1024) return `${v} B`; if (v < 1048576) return `${(v / 1024).toFixed(1)} KB`; return `${(v / 1048576).toFixed(2)} MB`; }
+    function estimateBase64Size(d) { const b = String(d || '').split(',')[1] || ''; return Math.floor(b.length * 3 / 4); }
+
+    async function compressImageFile(file) {
+      const url = URL.createObjectURL(file);
+      try {
+        const img = await new Promise((res, rej) => { const el = new Image(); el.onload = () => res(el); el.onerror = rej; el.src = url; });
+        const scale = Math.min(1, 1400 / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/webp', 0.82);
+        return { dataUrl, name: file.name.replace(/\.[^.]+$/, '') + '.webp', mimeType: 'image/webp', width: canvas.width, height: canvas.height, size: estimateBase64Size(dataUrl) };
+      } finally { URL.revokeObjectURL(url); }
+    }
+    async function handleDiagramUpload(ti, files) {
+      const f = files && files[0];
+      if (!f || !f.type.startsWith('image/')) return;
+      try { collectTabsFromDOM(); editingTabData[ti].diagram = await compressImageFile(f); renderTabsEditor(); showToast('Circuit diagram added!'); } catch (e) { showToast('Could not process image.', 'error'); }
+    }
+    function removeDiagram(ti) { collectTabsFromDOM(); if (editingTabData[ti]) delete editingTabData[ti].diagram; renderTabsEditor(); showToast('Diagram removed.'); }
+
+    function escHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    // ─── DEVELOPERS ───────────────────────────────────────────────────────────────
+    async function testConnection() {
+      try {
+        await backendRequest('/health');
+        showToast('Backend connection looks good.');
+      } catch (e) {
+        showToast(e.message || 'Backend connection failed.', 'error');
+      }
+    }
+
+    async function loadDevelopers() {
+      if (!isPrimaryAdmin()) { showToast('Only primary admin can manage developers.', 'error'); return; }
+      const c = document.getElementById('developers-container');
+      c.innerHTML = '<p style="color:var(--muted);font-family:var(--mono);font-size:12px">Loading...</p>';
+      try {
+        const data = await backendRequest('/developers');
+        const devs = data.developers || [];
+        if (!devs.length) { c.innerHTML = '<p style="color:var(--muted);font-family:var(--mono);font-size:12px">No developer accounts yet.</p>'; return; }
+        c.innerHTML = devs.map(d => `<div class="proj-list-card">
+      <div class="proj-list-info">
+        <div class="proj-list-title">${escHtml(d.displayName || d.username)}</div>
+        <div class="proj-list-meta">${escHtml(d.username)} · created ${escHtml(d.createdAt || '')}</div>
+      </div>
+      <div class="proj-list-actions">
+        <button class="btn-danger" onclick="deleteDeveloper('${escHtml(d.username)}')">Remove</button>
+      </div>
+    </div>`).join('');
+      } catch (e) { c.innerHTML = `<p style="color:var(--red);font-family:var(--mono);font-size:12px">${escHtml(e.message)}</p>`; }
+    }
+
+    async function saveDeveloper() {
+      const username = document.getElementById('dev-username').value.trim();
+      const displayName = document.getElementById('dev-display-name').value.trim();
+      const password = document.getElementById('dev-password').value;
+      const st = document.getElementById('dev-status');
+      st.textContent = '';
+      if (!username || !password) { st.textContent = 'ID and password required.'; st.style.color = 'var(--red)'; return; }
+      try {
+        await backendRequest('/developers', { method: 'POST', body: { username, displayName, password } });
+        document.getElementById('dev-username').value = '';
+        document.getElementById('dev-display-name').value = '';
+        document.getElementById('dev-password').value = '';
+        st.textContent = 'Developer saved.'; st.style.color = 'var(--green)';
+        loadDevelopers();
+      } catch (e) { st.textContent = e.message || 'Could not save developer.'; st.style.color = 'var(--red)'; }
+    }
+
+    async function deleteDeveloper(username) {
+      if (!confirm(`Remove developer "${username}"? They will no longer be able to log in.`)) return;
+      try { await backendRequest('/developers/delete', { method: 'POST', body: { username } }); showToast(`Developer "${username}" removed.`); loadDevelopers(); }
+      catch (e) { showToast(e.message || 'Could not remove developer.', 'error'); }
+    }
+
+    function downloadJsonFile(filename, value) {
+      const blob = new Blob([JSON.stringify(value, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function exportLiveDb() {
+      try {
+        const data = await backendRequest('/projects/export');
+        downloadJsonFile(`jumperjunction_live_db_${new Date().toISOString().slice(0, 10)}.json`, data.db || emptyDb());
+        showToast('Live DB export downloaded.');
+      } catch (e) {
+        showToast(e.message || 'Could not export the live DB.', 'error');
+      }
+    }
+
+    // ─── PUBLISH ──────────────────────────────────────────────────────────────────
+    function openPushModal() { document.getElementById('push-modal').classList.add('open'); }
+    function closePushModal() { document.getElementById('push-modal').classList.remove('open'); }
+
+    async function loadFromBackend(silent = false) {
+      try {
+        if (!silent) showToast('Syncing archive and live DB...');
+        const [archiveData, liveData] = await Promise.all([
+          loadProjectsFile(),
+          backendRequest('/projects')
+        ]);
+        fileDb = normalizeDb(archiveData);
+        backendDb = loadDraftDb() || normalizeDb(liveData.db);
+        backendDb.meta = backendDb.meta || {};
+        backendDb.meta.counterApiBase = WORKER_URL;
+        refreshMergedState();
+        if (!silent) showToast(loadDraftDb() ? 'Loaded archive, live DB, and your saved local draft.' : 'Synced archive and live DB.');
+      } catch (e) {
+        if (!silent) showToast('Failed to sync: ' + e.message, 'error');
+      }
+    }
+
+    async function publishChanges() {
+      const cfg = loadConfig();
+      if (!cfg.backendUrl || (isPrimaryAdmin() && !cfg.token)) {
+        document.getElementById('push-status').innerHTML = '<span style="color:var(--red)">Please log in again before publishing.</span>';
+        return;
+      }
+      const msg = document.getElementById('commit-msg').value || 'Publish project updates';
+      const bar = document.getElementById('push-progress');
+      const fill = document.getElementById('push-fill');
+      const st = document.getElementById('push-status');
+      bar.style.display = 'block'; fill.style.width = '25%';
+      st.innerHTML = '<span style="color:var(--muted)">Sending to backend...</span>';
+      try {
+        backendDb.meta = backendDb.meta || {};
+        backendDb.meta.counterApiBase = WORKER_URL;
+        fill.style.width = '55%';
+        st.innerHTML = '<span style="color:var(--muted)">Writing to live DB...</span>';
+        await backendRequest('/projects', { method: 'POST', body: { branch: cfg.branch || 'main', message: msg, db: backendDb } });
+        fill.style.width = '100%';
+        st.innerHTML = '<span style="color:var(--green)">✓ Published to the live DB. Site updates should appear shortly.</span>';
+        showToast('Published to live DB!');
+        clearDraftDb();
+        setTimeout(() => { closePushModal(); loadFromBackend(true); }, 2500);
+      } catch (e) {
+        fill.style.width = '0';
+        let msg2 = e.message || 'Publish failed.';
+        if (msg2.toLowerCase().includes('origin') || msg2.includes('403'))
+          msg2 = 'Origin not allowed (403) — check the allowed origin in the worker.';
+        else if (msg2.includes('401') || msg2.toLowerCase().includes('unauthorized'))
+          msg2 = 'Unauthorized (401) — please log in again.';
+        else if (msg2.toLowerCase().includes('failed to fetch'))
+          msg2 = 'Cannot reach the backend worker right now.';
+        st.innerHTML = `<span style="color:var(--red)">✗ ${msg2}</span>`;
+      }
+    }
+
+    // ─── KEYBOARD SHORTCUTS ───────────────────────────────────────────────────────
+    // Ctrl+Shift+% for admin, Ctrl+Shift+! for developer
+    // These 3-key combos are safe from accidental triggering in search bars
+    document.addEventListener('keydown', e => {
+      if (!e.ctrlKey || !e.shiftKey) return;
+      if (e.key === '%') {
+        e.preventDefault();
+        showLockScreen('admin');
+      } else if (e.key === '!') {
+        e.preventDefault();
+        showLockScreen('developer');
+      }
+    });
+
+    // ─── ACTIVITY TRACKING ────────────────────────────────────────────────────────
+    ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'].forEach(evt => {
+      document.addEventListener(evt, registerActivity, { passive: true });
+    });
+
+    // Enter key support on lock screen inputs
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('admin-password')?.addEventListener('keydown', e => { if (e.key === 'Enter') unlockAdmin(); });
+      document.getElementById('developer-password')?.addEventListener('keydown', e => { if (e.key === 'Enter') loginDeveloper(); });
+    });
+
+    // ─── GLOBAL SETTINGS ──────────────────────────────────────────────────────────
+    async function loadGlobalSettings() {
+      try {
+        const res = await fetch(`${WORKER_URL}/settings`);
+        if (res.ok) {
+          const data = await res.json();
+          const lockCheckbox = document.getElementById('setting-premium-lock');
+          const lockSlider = document.getElementById('setting-premium-lock-slider');
+          if (lockCheckbox && data.settings) {
+            lockCheckbox.checked = !!data.settings.premiumLocked;
+            if (lockSlider) {
+              lockSlider.style.transform = lockCheckbox.checked ? 'translateX(24px)' : 'translateX(0)';
+              lockSlider.previousElementSibling.style.backgroundColor = lockCheckbox.checked ? 'var(--red)' : 'var(--border)';
+            }
+          }
+        }
+      } catch (e) {
+        showToast('Failed to load global settings', true);
+      }
+    }
+    
+    async function saveGlobalSettings() {
+      if (!isPrimaryAdmin()) {
+        showToast('Only admins can change global settings', true);
+        loadGlobalSettings(); // Revert UI
+        return;
+      }
+      const lockCheckbox = document.getElementById('setting-premium-lock');
+      const lockSlider = document.getElementById('setting-premium-lock-slider');
+      const isLocked = lockCheckbox.checked;
+      
+      if (lockSlider) {
+        lockSlider.style.transform = isLocked ? 'translateX(24px)' : 'translateX(0)';
+        lockSlider.previousElementSibling.style.backgroundColor = isLocked ? 'var(--red)' : 'var(--border)';
+      }
+      
+      try {
+        const res = await fetch(`${WORKER_URL}/admin-api/settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionToken}`
+          },
+          body: JSON.stringify({ premiumLocked: isLocked })
+        });
+        if (res.ok) {
+          showToast('Settings updated successfully');
+        } else {
+          showToast('Failed to update settings', true);
+        }
+      } catch (e) {
+        showToast('Error connecting to backend', true);
+      }
+    }
+
+    // ─── INIT ─────────────────────────────────────────────────────────────────────
+    function init() {
+      applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+      // Check URL param for which panel to show
+      const mode = new URLSearchParams(location.search).get('mode') || 'admin';
+      showLockScreen(mode);
+    }
+    init();
+  </script>
+<script src="uiverse-buttons.js"></script>
+</body>
+
+</html>

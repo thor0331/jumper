@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - JumperJunction</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://www.google.com/recaptcha/api.js?render=6LcPUe4sAAAAAHekJ7el--n1g6UsxpKeIEFtlJaK" async defer></script>
+  <style>
+    :root {
+      --bg: #080a0f;
+      --bg2: #0d0f17;
+      --surface: #111420;
+      --surface2: #181c2a;
+      --border: #1e2235;
+      --border2: #252a3d;
+      --text: #eef3ff;
+      --muted: #99a8c7;
+      --muted2: #7382a4;
+      --green: #3dffa0;
+      --blue: #5eb8ff;
+      --amber: #ffb340;
+      --red: #ff6b7a;
+      --purple: #b57bff;
+      --display: 'Syne', sans-serif;
+      --body: 'Instrument Sans', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 15px;
+      line-height: 1.6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+      --theme-icon-filter: invert(1) brightness(2);
+    }
+    body[data-theme="light"] {
+      --bg: #f4f7fb; --bg2: #e8edf5; --surface: #ffffff; --surface2: #f4f7fb;
+      --border: #d7deea; --border2: #bcc7d9; --text: #0f1726; --muted: #43516c; --muted2: #62708a;
+      --theme-icon-filter: none;
+    }
+    .container {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+    h1 {
+      font-family: var(--display);
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-family: var(--body);
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    input:focus { outline: 1px solid var(--green); }
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: var(--green);
+      color: #000;
+      border-radius: 8px;
+      font-weight: 700;
+      font-family: var(--body);
+      font-size: 15px;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+      margin-bottom: 1rem;
+    }
+    .btn-primary:hover { background: #5affc0; }
+    .btn-oauth {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: 8px;
+      font-weight: 600;
+      font-family: var(--body);
+      font-size: 14px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: transparent;
+      cursor: pointer;
+    }
+    .btn-oauth:hover { border-color: var(--muted); }
+    .divider {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 1.5rem 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .social-btn-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .bottom-link {
+      margin-top: 1.5rem;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .bottom-link a {
+      color: var(--text);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    #auth-status {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" id="login-container">
+    <h1 id="title">Sign In</h1>
+    
+    <div id="email-section">
+      <div id="auth-name-group" style="display:none;">
+        <input type="text" id="auth-name" placeholder="Enter your name">
+      </div>
+      <input type="email" id="auth-email" placeholder="Email Address">
+      
+      <div style="position:relative;">
+        <input type="password" id="auth-password" placeholder="Password" style="padding-right:40px;margin-bottom:6px;">
+        <button type="button" onclick="const p=document.getElementById('auth-password');p.type=p.type==='password'?'text':'password';" style="position:absolute;right:10px;top:20px;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+
+      <div style="text-align: right; margin-bottom:1rem;">
+        <a id="forgot-password" onclick="sendPasswordReset()" style="font-size:12px; color:var(--muted); cursor:pointer; text-decoration:underline;">Forgot Password?</a>
+      </div>
+
+      <!-- reCAPTCHA v3 invisible widget is used -->
+
+      <button id="auth-submit" class="btn-primary" onclick="handleEmailAuth()">Sign In</button>
+    </div>
+
+    <div id="verification-section" style="display:none; text-align:center;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" style="margin-bottom:1rem;margin-top:1rem">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <h3 style="font-family:var(--display);font-size:1.2rem;font-weight:700;margin-bottom:0.5rem">Check your inbox</h3>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:1.5rem">We've sent a secure verification link to your email. Click it to verify your account.</p>
+      <button class="btn-primary" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);" onclick="location.reload()">Return to Login</button>
+    </div>
+
+    <div class="divider">or Sign In with</div>
+
+    <div class="social-btn-group">
+      <button class="btn-oauth" onclick="handleOAuth('google')">
+        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" alt="Google" style="width:18px;height:18px"> Google
+      </button>
+      <button class="btn-oauth" onclick="handleOAuth('github')">
+        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub" style="width:18px;height:18px; filter: var(--theme-icon-filter, none);"> GitHub
+      </button>
+    </div>
+
+    <div class="bottom-link">
+      <span id="bottom-text">Don't have an account? <a onclick="setAuthMode('signup')">Create one now</a></span>
+    </div>
+    
+    <div id="auth-status"></div>
+  </div>
+
+  <script>
+    const THEME_KEY = 'jumper-junction_theme';
+    const COUNTER_API_BASE = 'https://jumperjunction-admin-backend.team-jumperjunction.workers.dev';
+    const SUPABASE_URL = 'https://wbriqxebdkuqbtcvxtgv.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndicmlxeGViZGt1cWJ0Y3Z4dGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNTA4MTksImV4cCI6MjA5MTgyNjgxOX0._e1mILmLqzbAfgSsAGWzAez5v6Z7RHNR564O4yfJFN0';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    let authMode = 'login';
+    let pendingSignupEmail = '';
+    let pendingSignupPassword = '';
+
+    function applyTheme(theme) {
+      const resolvedTheme = theme === 'light' ? 'light' : 'dark';
+      document.body.dataset.theme = resolvedTheme;
+      localStorage.setItem(THEME_KEY, resolvedTheme);
+    }
+    // initialize theme
+    applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+    
+    function setAuthStatus(msg, tone) {
+      const el = document.getElementById('auth-status');
+      el.textContent = msg;
+      el.style.color = tone === 'error' ? 'var(--red)' : tone === 'success' ? 'var(--green)' : 'var(--muted)';
+    }
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      document.getElementById('auth-name-group').style.display = mode === 'signup' ? 'block' : 'none';
+      document.getElementById('title').textContent = mode === 'signup' ? 'Create Account' : 'Sign In';
+      document.getElementById('auth-submit').textContent = mode === 'signup' ? 'Create Account' : 'Sign In';
+      const fp = document.getElementById('forgot-password');
+      if(fp) fp.style.display = mode === 'signup' ? 'none' : 'inline';
+      const bottom = document.getElementById('bottom-text');
+      if (mode === 'signup') {
+        bottom.innerHTML = 'Already have an account? <a onclick="setAuthMode(\'login\')">Sign In</a>';
+      } else {
+        bottom.innerHTML = 'Don\'t have an account? <a onclick="setAuthMode(\'signup\')">Create one now</a>';
+      }
+      document.getElementById('verification-section').style.display = 'none';
+      document.getElementById('email-section').style.display = 'block';
+      setAuthStatus('');
+    }
+
+    async function getRecaptchaToken() {
+      if (typeof grecaptcha !== 'undefined') {
+         return await grecaptcha.execute('6LcPUe4sAAAAAHekJ7el--n1g6UsxpKeIEFtlJaK', {action: 'submit'});
+      }
+      return '';
+    }
+
+    async function sendPasswordReset() {
+      const email = document.getElementById('auth-email').value.trim();
+      if (!email) return alert('Enter your email address first.');
+      setAuthStatus('Sending reset link...', 'muted');
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: `${location.origin}/reset-password.html`
+      });
+      if (error) {
+        setAuthStatus(error.message, 'error');
+        return;
+      }
+      setAuthStatus('Password reset email sent. Please check your inbox.', 'success');
+    }
+
+    function getPostLoginTarget(defaultTarget = '/') {
+      const target = sessionStorage.getItem('jj_post_login_target');
+      if (target) {
+        sessionStorage.removeItem('jj_post_login_target');
+        return target;
+      }
+      return defaultTarget;
+    }
+
+    async function handleOAuth(provider) {
+      const token = await getRecaptchaToken();
+      if (!token) return alert('Please complete the ReCAPTCHA before logging in.');
+      await supabaseClient.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin + getPostLoginTarget() } });
+    }
+
+    async function handleEmailAuth() {
+      const token = await getRecaptchaToken();
+      if (!token) return alert('Please complete the ReCAPTCHA before logging in.');
+      
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      if (!email || !password) return alert('Please enter email and password.');
+
+      setAuthStatus('Processing...', 'muted');
+
+      try {
+        if (authMode === 'signup') {
+          const fullName = document.getElementById('auth-name').value.trim();
+          if (!fullName) return alert('Please enter your name.');
+          
+          setAuthStatus('Sending verification code...', 'muted');
+          const res = await fetch(`${COUNTER_API_BASE}/auth/signup/request`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, fullName })
+          });
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.error || 'Failed to send OTP.');
+
+          pendingSignupEmail = email;
+          pendingSignupPassword = password;
+          document.getElementById('email-section').style.display = 'none';
+          document.getElementById('verification-section').style.display = 'block';
+          setAuthStatus('Verification code sent to your email.', 'success');
+        } else {
+          const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          location.href = getPostLoginTarget('/');
+        }
+      } catch(e) {
+        setAuthStatus(e.message || 'Authentication failed.', 'error');
+      }
+    }
+
+
+    
+    // Check if already logged in
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
+      if (session) location.href = getPostLoginTarget('/');
+    });
+  </script>
+<script src="uiverse-buttons.js"></script>
+</body>
+</html>

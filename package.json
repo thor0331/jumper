@@ -1,0 +1,16 @@
+{
+  "name": "circuitlab-main",
+  "version": "1.0.0",
+  "description": "JumperJunction is a beginner-friendly hardware project website for Arduino, ESP32, ESP8266, Raspberry Pi, and similar boards. It includes a public project browser, per-project build pages, and an admin workflow backed by a Cloudflare Worker and a static `projects.json` archive.",
+  "main": "generate_sitemap.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cheerio": "^1.2.0"
+  }
+}

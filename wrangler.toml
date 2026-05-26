@@ -1,0 +1,1105 @@
+const VISITS_PENDING_KEY = 'site-total-visits-pending';
+const REVISITS_PENDING_KEY = 'site-total-revisits-pending';
+const DEVELOPER_USER_PREFIX = 'developer-user:';
+const DEVELOPER_SESSION_PREFIX = 'developer-session:';
+const ADMIN_SESSION_PREFIX = 'admin-session:';
+const DEVELOPER_SESSION_TTL_SECONDS = 12 * 60 * 60;
+const PROJ_DB_KEY = 'PROJ_DB';
+const ADMIN_PASSWORD_HASH_KEY = 'creatorlab@739917';
+const RATE_LIMIT_PREFIX = 'rate-limit:';
+const RATE_LIMIT_WINDOW_SECONDS = 10 * 60;
+const SIGNUP_OTP_TTL_SECONDS = 3 * 60;
+
+export default {
+  async fetch(request, env) {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders(env, request) });
+    }
+
+    try {
+      const url = new URL(request.url);
+
+      if (url.pathname === '/visits' && request.method === 'GET') {
+        await enforceRateLimit(request, env, 'visits-read', 300);
+        const stats = await getPublicVisitTotal(env);
+        return json({ ok: true, value: stats.visits, revisits: stats.revisits }, 200, env, request);
+      }
+
+      if (url.pathname === '/visits/hit' && request.method === 'POST') {
+        await enforceRateLimit(request, env, 'visits-hit', 60);
+        const body = await request.json().catch(()=>({}));
+        const stats = await registerVisit(env, body.isLogin);
+        return json({ ok: true, value: stats.visits, revisits: stats.revisits }, 200, env, request);
+      }
+
+      if (url.pathname === '/admin-auth/login' && request.method === 'POST') {
+        await enforceRateLimit(request, env, 'admin-login', 12);
+        const body = await request.json();
+        const session = await loginAdmin(env, body.password);
+        return json({ ok: true, ...session }, 200, env, request);
+      }
+
+      if (url.pathname === '/admin-auth/setup' && request.method === 'POST') {
+        const body = await request.json();
+        const ok = await setupAdmin(env, body.password);
+        return json({ ok }, 200, env, request);
+      }
+
+      if (url.pathname === '/developer-auth/login' && request.method === 'POST') {
+        await enforceRateLimit(request, env, 'developer-login', 18);
+        const body = await request.json();
+        const session = await loginDeveloper(env, body.username, body.password);
+        return json({ ok: true, ...session }, 200, env, request);
+      }
+
+      if (url.pathname === '/developers' && request.method === 'GET') {
+        await authorizeAdmin(request, env);
+        return json({ ok: true, developers: await listDevelopers(env) }, 200, env, request);
+      }
+
+      if (url.pathname === '/developers' && request.method === 'POST') {
+        await authorizeAdmin(request, env);
+        const body = await request.json();
+        const developer = await upsertDeveloper(env, body);
+        return json({ ok: true, developer }, 200, env, request);
+      }
+
+      if (url.pathname === '/developers/delete' && request.method === 'POST') {
+        await authorizeAdmin(request, env);
+        const body = await request.json();
+        const username = normalizeUsername(body.username);
+        if (!username) return json({ message: 'Username is required.' }, 400, env, request);
+        await env.VISITOR_STATS.delete(`${DEVELOPER_USER_PREFIX}${username}`);
+        return json({ ok: true }, 200, env, request);
+      }
+
+      if (url.pathname === '/projects/public' && request.method === 'GET') {
+        await enforceRateLimit(request, env, 'projects-read', 300);
+        const db = await getProjectDatabase(env);
+        // Filter locked projects down to a minimal stub so frontend merge explicitly overwrites them
+        db.projects = db.projects.map(p => {
+          if (p.locked) {
+            return { id: p.id, locked: true };
+          }
+          // Do not strip code from free projects
+          return { ...p };
+        });
+        return json({ ok: true, db }, 200, env, request);
+      }
+
+      if (url.pathname === '/projects/code' && request.method === 'POST') {
+        await enforceRateLimit(request, env, 'projects-code', 60);
+        const body = await request.json();
+        const { id } = body;
+        if (!id) return json({ message: 'Project ID required.' }, 400, env, request);
+
+        const db = await getProjectDatabase(env);
+        const project = db.projects.find(p => p.id === id);
+        if (!project || project.locked) return json({ message: 'Project not found.' }, 404, env, request);
+
+        // Extract code from tabs
+        let codeContent = '';
+        if (Array.isArray(project.tabs)) {
+          const codeTab = project.tabs.find(t => t.type === 'code');
+          if (codeTab) codeContent = codeTab.content || '';
+        }
+
+        return json({ ok: true, code: codeContent }, 200, env, request);
+      }
+
+      if (url.pathname === '/projects/interact' && request.method === 'POST') {
+        await enforceRateLimit(request, env, 'projects-interact', 60);
+        const body = await request.json();
+        const { id, userId, action } = body;
+        if (!id || !userId || !['like', 'star'].includes(action)) {
+          return json({ ok: false, message: 'Invalid interaction parameters.' }, 200, env, request);
+        }
+        const db = await getProjectDatabase(env);
+        const project = db.projects.find(p => p.id === id.trim());
+        if (!project) return json({ ok: false, message: 'Project not found.' }, 200, env, request);
+
+        const listKey = action === 'like' ? 'likes' : 'stars';
+        if (!Array.isArray(project[listKey])) project[listKey] = [];
+        
+        const idx = project[listKey].indexOf(userId);
+        if (idx > -1) project[listKey].splice(idx, 1); // remove if exists (toggle off)
+        else project[listKey].push(userId); // add if not exists (toggle on)
+        
+        await saveProjectDatabase(env, db);
+        return json({ ok: true, [listKey]: project[listKey] }, 200, env, request);
+      }
+
+      if (url.pathname === '/projects/export' && request.method === 'GET') {
+        await authorizeRequest(request, env, { allowDeveloper: true });
+        return json({ ok: true, db: await getProjectDatabase(env) }, 200, env, request);
+      }
+
+      if (url.pathname === '/settings' && request.method === 'GET') {
+        const rawSettings = await env.VISITOR_STATS.get('APP_SETTINGS');
+        const settings = rawSettings ? JSON.parse(rawSettings) : { premiumLocked: false };
+        return json({ ok: true, settings }, 200, env, request);
+      }
+
+      if (url.pathname === '/admin-api/settings' && request.method === 'POST') {
+        await authorizeAdmin(request, env);
+        const body = await request.json();
+        const rawSettings = await env.VISITOR_STATS.get('APP_SETTINGS');
+        const settings = rawSettings ? JSON.parse(rawSettings) : { premiumLocked: false };
+        if (typeof body.premiumLocked !== 'undefined') {
+          settings.premiumLocked = !!body.premiumLocked;
+        }
+        await env.VISITOR_STATS.put('APP_SETTINGS', JSON.stringify(settings));
+        return json({ ok: true, settings }, 200, env, request);
+      }
+
+      if (url.pathname === '/health' && request.method === 'GET') {
+        return json({ ok: true, repo: 'live-db', storage: 'cloudflare-kv' }, 200, env, request);
+      }
+
+      if (url.pathname === '/user/purchases' && request.method === 'GET') {
+        const user = await authorizeUser(request, env);
+        const raw = await env.VISITOR_STATS.get(`purchases:${user.id}`);
+        const purchases = raw ? JSON.parse(raw) : [];
+        return json({ ok: true, purchases }, 200, env, request);
+      }
+
+      if (url.pathname === '/auth/signup/request' && request.method === 'POST') {
+        await enforceRateLimit(request, env, 'signup-request', 10);
+        const body = await request.json().catch(() => ({}));
+        const email = String(body.email || '').trim().toLowerCase();
+        const password = String(body.password || '');
+        const fullName = String(body.fullName || '').trim();
+        if (!email || !password) {
+          return json({ error: 'Email and password are required.' }, 400, env, request);
+        }
+        if (password.length < 8) {
+          return json({ error: 'Password must be at least 8 characters long.' }, 400, env, request);
+        }
+
+        if (!env.SUPABASE_SERVICE_KEY) {
+          return json({ error: 'Missing SUPABASE_SERVICE_KEY in backend environment.' }, 500, env, request);
+        }
+
+        const SUPABASE_URL = 'https://wbriqxebdkuqbtcvxtgv.supabase.co';
+        const resLink = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            'Content-Type': 'application/json',
+            'apikey': env.SUPABASE_SERVICE_KEY
+          },
+          body: JSON.stringify({
+            type: 'signup',
+            email,
+            password,
+            data: { full_name: fullName },
+            redirect_to: 'https://jumperjunction.codes/'
+          })
+        });
+
+        if (!resLink.ok) {
+           const errData = await resLink.json().catch(()=>({}));
+           return json({ error: errData.message || errData.msg || 'Failed to generate verification link' }, 400, env, request);
+        }
+
+        const linkData = await resLink.json();
+        const actionLink = linkData.properties?.action_link || linkData.action_link;
+
+        await sendResendEmail(env, {
+          to: [email],
+          subject: 'Welcome to JumperJunction - Verify your email',
+          html: buildVerificationEmailHtml({
+            title: 'Verify your account',
+            subtitle: 'Welcome to JumperJunction. You are one step away from joining the builders community.',
+            link: actionLink,
+            footer: 'If you did not request this, please ignore this email.'
+          })
+        });
+        return json({ ok: true, message: 'Verification link sent.' }, 200, env, request);
+      }
+
+
+      if (url.pathname === '/auth/welcome' && request.method === 'POST') {
+        const user = await authorizeUser(request, env);
+        const sent = await maybeSendWelcomeEmail(env, user);
+        return json({ ok: true, sent }, 200, env, request);
+      }
+
+      if (url.pathname === '/create-razorpay-order' && request.method === 'POST') {
+        await enforceRateLimit(request, env, 'razorpay-order', 20);
+        await authorizeUser(request, env);
+        const body = await request.json().catch(() => ({}));
+        const { currency = 'INR', receipt, items = [] } = body;
+        
+        if (!items || !items.length || !receipt) {
+          return json({ error: 'Missing required parameters: items, receipt' }, 400, env, request);
+        }
+
+        // Securely calculate total amount by fetching project prices from DB
+        const dbRaw = await env.VISITOR_STATS.get('PROJ_DB');
+        const db = dbRaw ? JSON.parse(dbRaw) : { projects: [] };
+        
+        let calculatedAmount = 0;
+        let verifiedItems = [];
+        
+        for (const reqItem of items) {
+          const dbProject = db.projects.find(p => p.id === reqItem.id);
+          if (!dbProject) {
+            return json({ error: `Project not found: ${reqItem.title || reqItem.id}` }, 400, env, request);
+          }
+          if (dbProject.isPremium && dbProject.price) {
+            calculatedAmount += Number(dbProject.price);
+            verifiedItems.push({
+              id: dbProject.id,
+              title: dbProject.title,
+              price: dbProject.price,
+              currency: dbProject.currency || currency
+            });
+          } else {
+             // If not premium, it shouldn't be in a Razorpay checkout, but we will add it with 0 price just in case
+             verifiedItems.push({
+              id: dbProject.id,
+              title: dbProject.title,
+              price: 0,
+              currency: currency
+            });
+          }
+        }
+        
+        if (calculatedAmount <= 0) {
+           return json({ error: 'Total checkout amount must be greater than 0.' }, 400, env, request);
+        }
+
+        const razorpayKeyId = env.RAZORPAY_KEY_ID;
+        const razorpaySecret = env.RAZORPAY_SECRET;
+        
+        if (!razorpayKeyId || !razorpaySecret) {
+          // Mock mode for local testing
+          const mockOrderId = 'order_mock_' + Date.now();
+          await env.VISITOR_STATS.put(`pending_order:${mockOrderId}`, JSON.stringify(verifiedItems), { expirationTtl: 3600 });
+          return json({ id: mockOrderId, amount: calculatedAmount, currency, keyId: 'mock', items: verifiedItems }, 200, env, request);
+        }
+
+        const authString = btoa(`${razorpayKeyId}:${razorpaySecret}`);
+        const rzpResponse = await fetch('https://api.razorpay.com/v1/orders', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${authString}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ amount: Math.round(calculatedAmount * 100), currency, receipt })
+        });
+        
+        if (!rzpResponse.ok) {
+          const errText = await rzpResponse.text().catch(() => '{}');
+          let errDesc = 'Failed to create Razorpay order';
+          try {
+            const errJson = JSON.parse(errText);
+            if (errJson.error && errJson.error.description) {
+              errDesc = errJson.error.description;
+            } else if (errJson.error && errJson.error.reason) {
+              errDesc = errJson.error.reason;
+            }
+          } catch(e) {}
+          return json({ error: `Razorpay Error: ${errDesc}` }, 400, env, request);
+        }
+        const order = await rzpResponse.json();
+        await env.VISITOR_STATS.put(`pending_order:${order.id}`, JSON.stringify(verifiedItems), { expirationTtl: 3600 });
+        return json({ ...order, keyId: razorpayKeyId, items: verifiedItems }, 200, env, request);
+      }
+
+      if (url.pathname === '/verify-razorpay-payment' && request.method === 'POST') {
+        const user = await authorizeUser(request, env);
+        const body = await request.json().catch(() => ({}));
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, billingAddress = null } = body;
+
+        const razorpaySecret = env.RAZORPAY_SECRET;
+        
+        if (razorpaySecret && razorpay_signature) {
+          // Real verification
+          const isValid = await verifyRazorpaySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature, razorpaySecret);
+          if (!isValid) return json({ error: 'Invalid payment signature' }, 400, env, request);
+        } else if (env.RAZORPAY_SECRET) {
+           return json({ error: 'Missing signature' }, 400, env, request);
+        } // Else mock mode passes
+
+        // Retrieve secure items list from KV
+        if (!razorpay_order_id) {
+           return json({ error: 'Missing order ID' }, 400, env, request);
+        }
+        const pendingOrderRaw = await env.VISITOR_STATS.get(`pending_order:${razorpay_order_id}`);
+        if (!pendingOrderRaw) {
+           return json({ error: 'Order expired or not found. Please contact support if you were charged.' }, 400, env, request);
+        }
+        const orderItems = JSON.parse(pendingOrderRaw);
+
+        // Record purchase securely
+        const raw = await env.VISITOR_STATS.get(`purchases:${user.id}`);
+        const purchases = raw ? JSON.parse(raw) : [];
+
+        for (const item of orderItems) {
+          if (!item || !item.id) continue;
+          if (purchases.find(p => p.id === item.id)) continue;
+          purchases.push({
+            id: item.id,
+            title: item.title,
+            price: item.price,
+            currency: item.currency || 'INR',
+            date: new Date().toISOString(),
+            orderId: razorpay_order_id,
+            billingAddress
+          });
+        }
+        await env.VISITOR_STATS.put(`purchases:${user.id}`, JSON.stringify(purchases));
+        await env.VISITOR_STATS.delete(`pending_order:${razorpay_order_id}`); // Clean up
+
+        await sendResendEmail(env, {
+          to: [user.email],
+          subject: 'Your JumperJunction purchase is ready',
+          html: buildPurchaseEmailHtml({ email: user.email, items: orderItems, billingAddress })
+        });
+        
+        return json({ ok: true, purchases }, 200, env, request);
+      }
+
+      if (url.pathname === '/download/request-otp' && request.method === 'POST') {
+        await enforceRateLimit(request, env, 'otp-request', 10);
+        const user = await authorizeUser(request, env);
+        const body = await request.json().catch(() => ({}));
+        const { projectId } = body;
+
+        // Verify they own it
+        const raw = await env.VISITOR_STATS.get(`purchases:${user.id}`);
+        const purchases = raw ? JSON.parse(raw) : [];
+        if (!purchases.find(p => p.id === projectId)) {
+          return json({ error: 'Unauthorized to download this project.' }, 403, env, request);
+        }
+
+        // reCAPTCHA verification removed for dashboard downloads per user request
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        await env.VISITOR_STATS.put(`otp:${user.id}:${projectId}`, otp, { expirationTtl: SIGNUP_OTP_TTL_SECONDS });
+
+        if (env.RESEND_API_KEY) {
+          await sendResendEmail(env, {
+            to: [user.email],
+            subject: 'JumperJunction Download Verification Code',
+            html: buildOtpEmailHtml({
+              title: 'Secure your premium download',
+              subtitle: `Use this code to verify your download for ${projectId}.`,
+              otp,
+              footer: 'This verification code expires in 3 minutes. Do not share it.'
+            })
+          });
+          return json({ ok: true, message: 'OTP sent to email.' }, 200, env, request);
+        } else {
+          // Mock mode
+          return json({ ok: true, mockOtp: otp, message: 'Mock OTP generated (no Resend key)' }, 200, env, request);
+        }
+      }
+
+      if (url.pathname === '/download/verify-otp' && request.method === 'POST') {
+        await enforceRateLimit(request, env, 'otp-verify', 20);
+        const user = await authorizeUser(request, env);
+        const body = await request.json().catch(() => ({}));
+        const { projectId, otp } = body;
+
+        const storedOtp = await env.VISITOR_STATS.get(`otp:${user.id}:${projectId}`);
+        if (!storedOtp || storedOtp !== otp) {
+          return json({ error: 'Invalid or expired OTP' }, 400, env, request);
+        }
+
+        // OTP Valid. Generate Signed URL using Service Role Key
+        await env.VISITOR_STATS.delete(`otp:${user.id}:${projectId}`); // Consume OTP
+        
+        if (!env.SUPABASE_SERVICE_KEY) {
+          return json({ error: 'Missing SUPABASE_SERVICE_KEY in backend environment.' }, 500, env, request);
+        }
+
+        const SUPABASE_URL = 'https://wbriqxebdkuqbtcvxtgv.supabase.co';
+        const res = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/premium-downloads/${projectId}.zip`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ expiresIn: 120 })
+        });
+
+        if (!res.ok) {
+           return json({ error: 'Failed to generate signed URL from Supabase.' }, 500, env, request);
+        }
+        
+        const data = await res.json();
+        return json({ ok: true, signedUrl: data.signedURL }, 200, env, request);
+      }
+
+      if (url.pathname === '/projects' && request.method === 'GET') {
+        await authorizeRequest(request, env, { allowDeveloper: true });
+        return json({ ok: true, db: await getProjectDatabase(env) }, 200, env, request);
+      }
+
+      if (url.pathname === '/projects' && request.method === 'POST') {
+        await enforceRateLimit(request, env, 'projects-write', 40);
+        const auth = await authorizeRequest(request, env, { allowDeveloper: true });
+        const body = await request.json();
+        const message = body.message || 'Update database';
+        const nextDb = body.db;
+
+        if (!nextDb || typeof nextDb !== 'object') {
+          return json({ message: 'Invalid project database payload.' }, 400, env, request);
+        }
+
+        let payloadDb = nextDb;
+        if (auth.role === 'developer') {
+          const currentDb = await getProjectDatabase(env);
+          payloadDb = enforceDeveloperScope(currentDb, nextDb, auth);
+        }
+
+        await saveProjectDatabase(env, payloadDb, message);
+        return json({ ok: true }, 200, env, request);
+      }
+
+      return json({ message: 'Not found.' }, 404, env, request);
+    } catch (error) {
+      const status = error instanceof HttpError ? error.status : 500;
+      return json({ message: error.message || 'Unexpected server error.' }, status, env, request);
+    }
+  }
+};
+
+async function authorizeAdmin(request, env) {
+  validateOrigin(request, env);
+  const authHeader = request.headers.get('Authorization') || request.headers.get('X-Admin-Key') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : authHeader.trim();
+  
+  if (!token) throw new HttpError('Unauthorized.', 401);
+  const raw = await env.VISITOR_STATS.get(`${ADMIN_SESSION_PREFIX}${token}`);
+  if (!raw) throw new HttpError('Unauthorized.', 401);
+  const session = JSON.parse(raw);
+  if (!session.expiresAt || session.expiresAt < Date.now()) {
+    throw new HttpError('Session expired.', 401);
+  }
+  return session;
+}
+
+async function authorizeRequest(request, env, options = {}) {
+  try {
+    return await authorizeAdmin(request, env);
+  } catch (error) {
+    if (!(options.allowDeveloper && error instanceof HttpError && error.status === 401)) {
+      throw error;
+    }
+  }
+
+  validateOrigin(request, env);
+  const authHeader = request.headers.get('Authorization') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  if (!token) throw new HttpError('Unauthorized.', 401);
+  return getDeveloperSession(env, token);
+}
+
+async function authorizeUser(request, env) {
+  validateOrigin(request, env);
+  const authHeader = request.headers.get('Authorization') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  if (!token) throw new HttpError('Unauthorized.', 401);
+  
+  const SUPABASE_URL = 'https://wbriqxebdkuqbtcvxtgv.supabase.co';
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  
+  if (!res.ok) throw new HttpError('Unauthorized session.', 401);
+  const user = await res.json();
+  if (!user || !user.id) throw new HttpError('Unauthorized session.', 401);
+  return user;
+}
+
+async function verifyRazorpaySignature(orderId, paymentId, signature, secret) {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  );
+  const data = encoder.encode(orderId + '|' + paymentId);
+  const hash = await crypto.subtle.sign('HMAC', key, data);
+  const hashHex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex === signature;
+}
+
+async function verifyRecaptchaToken(token, secret) {
+  if (!secret) return true;
+  if (!token) return false;
+  const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      secret,
+      response: token
+    })
+  });
+  if (!res.ok) return false;
+  const data = await res.json();
+  // For reCAPTCHA v3, ensure success and a reasonable score (e.g., >= 0.5)
+  if (!data.success) return false;
+  if (data.score !== undefined && data.score < 0.5) return false;
+  return true;
+}
+
+async function createSupabaseUser(env, { email, password, fullName }) {
+  if (!env.SUPABASE_SERVICE_KEY) {
+    throw new HttpError('Missing SUPABASE_SERVICE_KEY in backend environment.', 500);
+  }
+  const SUPABASE_URL = 'https://wbriqxebdkuqbtcvxtgv.supabase.co';
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+      'apikey': env.SUPABASE_SERVICE_KEY
+    },
+    body: JSON.stringify({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        full_name: fullName
+      }
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new HttpError(data.msg || data.message || 'Could not create Supabase user.', 400);
+  }
+  return data.user || data;
+}
+
+async function maybeSendWelcomeEmail(env, user) {
+  if (!env.RESEND_API_KEY || !user?.id || !user?.email) return false;
+  const key = `welcome-sent:${user.id}`;
+  if (await env.VISITOR_STATS.get(key)) return false;
+  await sendResendEmail(env, {
+    to: [user.email],
+    subject: 'Welcome to JumperJunction',
+    html: buildWelcomeEmailHtml(user)
+  });
+  await env.VISITOR_STATS.put(key, '1');
+  return true;
+}
+
+async function sendResendEmail(env, { to, subject, html }) {
+  if (!env.RESEND_API_KEY) return false;
+  const from = env.RESEND_FROM_EMAIL || 'JumperJunction <onboarding@resend.dev>';
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ from, to, subject, html })
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(() => '');
+    throw new HttpError(`Email delivery failed. ${err}`.trim(), 500);
+  }
+  return true;
+}
+
+function buildEmailShell({ eyebrow, title, body, footer = '' }) {
+  return `<!doctype html>
+  <html>
+    <body style="margin:0;padding:0;background:#0b0e14;font-family:Arial,sans-serif;color:#e8eefc">
+      <div style="max-width:620px;margin:0 auto;padding:32px 20px">
+        <div style="background:linear-gradient(180deg,#101827 0%,#121b2f 100%);border:1px solid #20304e;border-radius:22px;padding:32px">
+          <div style="display:inline-block;padding:6px 12px;border-radius:999px;background:#122318;color:#3dffa0;font-size:12px;letter-spacing:.08em;text-transform:uppercase">${eyebrow}</div>
+          <h1 style="margin:18px 0 10px;font-size:32px;line-height:1.1;color:#ffffff">${title}</h1>
+          <div style="font-size:16px;line-height:1.8;color:#b9c7e6">${body}</div>
+          ${footer ? `<div style="margin-top:20px;font-size:12px;line-height:1.7;color:#7f90b4">${footer}</div>` : ''}
+        </div>
+      </div>
+    </body>
+  </html>`;
+}
+
+function buildOtpEmailHtml({ title, subtitle, otp, footer }) {
+  return buildEmailShell({
+    eyebrow: 'Verification Code',
+    title,
+    body: `<p style="margin:0 0 18px">${subtitle}</p>
+      <div style="display:inline-block;padding:18px 22px;border-radius:18px;background:#0f1422;border:1px solid #2a3b5f;color:#3dffa0;font-size:34px;font-weight:800;letter-spacing:.35em">${otp}</div>`,
+    footer
+  });
+}
+
+function buildVerificationEmailHtml({ title, subtitle, link, footer }) {
+  return buildEmailShell({
+    eyebrow: 'Verification Required',
+    title,
+    body: `<p style="margin:0 0 18px">${subtitle}</p>
+      <blockquote style="margin: 0 0 24px; padding: 12px 18px; border-left: 4px solid #3dffa0; background: rgba(61, 255, 160, 0.05); color: #b9c7e6; font-style: italic;">
+        "Any fool can know. The point is to understand." <br>
+        <span style="font-size: 12px; color: #7f90b4;">— Albert Einstein</span>
+      </blockquote>
+      <a href="${link}" style="display:inline-block;padding:14px 24px;border-radius:12px;background:#3dffa0;color:#0b0e14;font-size:16px;font-weight:700;text-decoration:none;letter-spacing:.05em">Verify My Email</a>`,
+    footer
+  });
+}
+
+function buildWelcomeEmailHtml(user) {
+  const name = user?.user_metadata?.full_name || user?.email || 'builder';
+  return buildEmailShell({
+    eyebrow: 'Welcome',
+    title: `Welcome to JumperJunction, ${escapeHtml(name)}`,
+    body: `<p style="margin:0 0 14px">Your account is ready. Start exploring electronics projects, save the builds you love, and unlock premium downloads from your dashboard whenever you are ready.</p>
+      <p style="margin:0">Keep building. Great hardware comes from curious minds and steady hands.</p>`,
+    footer: 'You are receiving this message because a JumperJunction account was created or first used with this email address.'
+  });
+}
+
+function buildPurchaseEmailHtml({ items, billingAddress }) {
+  const list = (Array.isArray(items) ? items : []).map(item => `<li style="margin-bottom:8px">${escapeHtml(item.title || item.id || 'Project')} — ${escapeHtml(String(item.currency || 'INR'))} ${escapeHtml(String(item.price || '0.00'))}</li>`).join('');
+  const address = billingAddress ? `<p style="margin:18px 0 0"><strong>Billing address:</strong><br>${escapeHtml([billingAddress.firstName, billingAddress.lastName].filter(Boolean).join(' '))}<br>${escapeHtml(billingAddress.addressLine1 || '')}<br>${escapeHtml([billingAddress.city, billingAddress.zip].filter(Boolean).join(', '))}<br>${escapeHtml(billingAddress.country || '')}</p>` : '';
+  return buildEmailShell({
+    eyebrow: 'Purchase Confirmed',
+    title: 'Your premium projects are ready',
+    body: `<p style="margin:0 0 14px">Thank you for purchasing from JumperJunction. Your order has been verified successfully.</p>
+      <ul style="padding-left:18px;margin:0 0 10px">${list}</ul>
+      <p style="margin:0">Visit your dashboard and open <strong>My Orders</strong> to access your secure downloads.</p>${address}`,
+    footer: 'If a payment ever fails or gets interrupted, access is granted only after a successful verified payment. This keeps your order history safe and accurate.'
+  });
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function normalizeOrigin(v){
+  if(!v) return '';
+  try{ const u=new URL(v.trim().replace(/\/+$/,'')); return `${u.protocol}//${u.host}`.toLowerCase(); }
+  catch{ return v.trim().replace(/\/+$/,'').toLowerCase(); }
+}
+
+function validateOrigin(request, env) {
+  const ALLOWED_ORIGINS = [
+    'https://jumperjunction.codes',
+    'https://prashanthg05.github.io',
+  ];
+  if (env && env.ALLOWED_ORIGIN) {
+    ALLOWED_ORIGINS.push(normalizeOrigin(env.ALLOWED_ORIGIN));
+  }
+  const provided = request.headers.get('Origin') || request.headers.get('X-Site-Origin') || '';
+  
+  if (!provided) {
+    // Only allow missing Origin for GET requests (like curl), but block for mutations
+    if (request.method !== 'GET') {
+      throw new HttpError('Origin header required for this operation.', 403);
+    }
+    return;
+  }
+  
+  const norm = normalizeOrigin(provided);
+  if (!ALLOWED_ORIGINS.some(o => norm === normalizeOrigin(o))) {
+    throw new HttpError('Origin not allowed.', 403);
+  }
+}
+
+async function getAdminPasswordHash(env) {
+  const raw = await env.VISITOR_STATS.get(ADMIN_PASSWORD_HASH_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+
+async function setupAdmin(env, password) {
+  if (!password || password.length < 12) {
+    throw new HttpError('Admin password must be at least 12 characters.', 400);
+  }
+  const existing = await getAdminPasswordHash(env);
+  if (existing) {
+    throw new HttpError('Admin password already set.', 400);
+  }
+  const hashed = await hashPassword(password);
+  await env.VISITOR_STATS.put(ADMIN_PASSWORD_HASH_KEY, JSON.stringify(hashed));
+  return true;
+}
+
+async function loginAdmin(env, password) {
+  if (!password) throw new HttpError('Password is required.', 400);
+  const saved = await getAdminPasswordHash(env);
+  if (!saved) throw new HttpError('Admin not setup yet.', 400);
+  
+  const ok = await verifyPassword(password, saved);
+  if (!ok) throw new HttpError('Invalid password.', 401);
+
+  const token = crypto.randomUUID();
+  const session = {
+    username: 'admin',
+    displayName: 'Primary Admin',
+    role: 'admin',
+    expiresAt: Date.now() + DEVELOPER_SESSION_TTL_SECONDS * 1000
+  };
+  await env.VISITOR_STATS.put(
+    `${ADMIN_SESSION_PREFIX}${token}`,
+    JSON.stringify(session),
+    { expirationTtl: DEVELOPER_SESSION_TTL_SECONDS }
+  );
+  return { token, user: session };
+}
+
+async function loginDeveloper(env, username, password) {
+  const normalizedUsername = normalizeUsername(username);
+  if (!normalizedUsername || !password) {
+    throw new HttpError('Username and password are required.', 400);
+  }
+
+  const developer = await getDeveloperUser(env, normalizedUsername);
+  if (!developer) throw new HttpError('Invalid username or password.', 401);
+
+  const ok = await verifyPassword(password, developer.password);
+  if (!ok) throw new HttpError('Invalid username or password.', 401);
+
+  const token = crypto.randomUUID();
+  const session = {
+    username: developer.username,
+    displayName: developer.displayName || developer.username,
+    role: 'developer',
+    expiresAt: Date.now() + DEVELOPER_SESSION_TTL_SECONDS * 1000
+  };
+  await env.VISITOR_STATS.put(
+    `${DEVELOPER_SESSION_PREFIX}${token}`,
+    JSON.stringify(session),
+    { expirationTtl: DEVELOPER_SESSION_TTL_SECONDS }
+  );
+  return { token, user: session };
+}
+
+async function getDeveloperSession(env, token) {
+  const raw = await env.VISITOR_STATS.get(`${DEVELOPER_SESSION_PREFIX}${token}`);
+  if (!raw) throw new HttpError('Unauthorized.', 401);
+  const session = JSON.parse(raw);
+  if (!session.expiresAt || session.expiresAt < Date.now()) {
+    throw new HttpError('Session expired.', 401);
+  }
+  return session;
+}
+
+function getClientIp(request) {
+  return request.headers.get('CF-Connecting-IP')
+    || request.headers.get('X-Forwarded-For')
+    || request.headers.get('X-Real-IP')
+    || 'unknown';
+}
+
+async function enforceRateLimit(request, env, scope, limit) {
+  ensureKv(env);
+  const bucket = Math.floor(Date.now() / (RATE_LIMIT_WINDOW_SECONDS * 1000));
+  const ip = getClientIp(request);
+  const key = `${RATE_LIMIT_PREFIX}${scope}:${bucket}:${ip}`;
+  const value = Number(await env.VISITOR_STATS.get(key));
+  const current = Number.isFinite(value) && value >= 0 ? value : 0;
+  if (current >= limit) {
+    throw new HttpError('Too many requests. Please try again later.', 429);
+  }
+  await env.VISITOR_STATS.put(key, String(current + 1), { expirationTtl: RATE_LIMIT_WINDOW_SECONDS + 60 });
+}
+
+async function listDevelopers(env) {
+  const keys = await env.VISITOR_STATS.list({ prefix: DEVELOPER_USER_PREFIX });
+  const users = [];
+  for (const item of keys.keys) {
+    const raw = await env.VISITOR_STATS.get(item.name);
+    if (!raw) continue;
+    const developer = JSON.parse(raw);
+    users.push({
+      username: developer.username,
+      displayName: developer.displayName || developer.username,
+      createdAt: developer.createdAt || ''
+    });
+  }
+  users.sort((a, b) => a.username.localeCompare(b.username));
+  return users;
+}
+
+async function upsertDeveloper(env, payload) {
+  const username = normalizeUsername(payload.username);
+  const password = String(payload.password || '');
+  const displayName = String(payload.displayName || username).trim();
+
+  if (!username || !password) {
+    throw new HttpError('Developer username and password are required.', 400);
+  }
+  if (password.length < 8) {
+    throw new HttpError('Developer password must be at least 8 characters.', 400);
+  }
+
+  const developer = {
+    username,
+    displayName: displayName || username,
+    password: await hashPassword(password),
+    createdAt: new Date().toISOString()
+  };
+  await env.VISITOR_STATS.put(`${DEVELOPER_USER_PREFIX}${username}`, JSON.stringify(developer));
+  return { username: developer.username, displayName: developer.displayName, createdAt: developer.createdAt };
+}
+
+async function getDeveloperUser(env, username) {
+  const raw = await env.VISITOR_STATS.get(`${DEVELOPER_USER_PREFIX}${username}`);
+  return raw ? JSON.parse(raw) : null;
+}
+
+function normalizeUsername(value) {
+  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+}
+
+async function hashPassword(password) {
+  const salt = bytesToBase64(crypto.getRandomValues(new Uint8Array(16)));
+  return {
+    salt,
+    hash: await sha256(`${salt}:${password}`)
+  };
+}
+
+async function verifyPassword(password, saved) {
+  if (!saved || !saved.salt || !saved.hash) return false;
+  return (await sha256(`${saved.salt}:${password}`)) === saved.hash;
+}
+
+function enforceDeveloperScope(currentDb, nextDb, auth) {
+  const current = cloneJson(currentDb);
+  const submitted = cloneJson(nextDb);
+
+  if (!Array.isArray(submitted.boards) || !Array.isArray(submitted.projects)) {
+    throw new HttpError('Invalid project database payload.', 400);
+  }
+
+  const currentBoards = new Map((current.boards || []).map(board => [board.id, board]));
+  const submittedBoards = new Map((submitted.boards || []).map(board => [board.id, board]));
+  for (const [boardId, existingBoard] of currentBoards.entries()) {
+    const nextBoard = submittedBoards.get(boardId);
+    const boardOwner = normalizeUsername(existingBoard.ownerUsername);
+    const developerOwnsBoard = boardOwner && boardOwner === auth.username;
+    if (!nextBoard) {
+      if (!developerOwnsBoard) {
+        throw new HttpError('Developers cannot delete boards owned by others.', 403);
+      }
+      continue;
+    }
+    if (!developerOwnsBoard && JSON.stringify(nextBoard) !== JSON.stringify(existingBoard)) {
+      throw new HttpError('Developers cannot change boards owned by others.', 403);
+    }
+  }
+
+  submitted.boards = submitted.boards.map(board => {
+    const existing = currentBoards.get(board.id);
+    if (existing) {
+      const boardOwner = normalizeUsername(existing.ownerUsername);
+      if (!boardOwner || boardOwner !== auth.username) {
+        return existing;
+      }
+      return { ...board, ownerUsername: auth.username };
+    }
+    return { ...board, ownerUsername: auth.username };
+  });
+
+  const currentProjects = new Map((current.projects || []).map(project => [project.id, project]));
+  const submittedProjects = new Map((submitted.projects || []).map(project => [project.id, project]));
+
+  for (const [projectId, existingProject] of currentProjects.entries()) {
+    const ownerUsername = normalizeUsername(existingProject.ownerUsername);
+    const nextProject = submittedProjects.get(projectId);
+    if (ownerUsername && ownerUsername !== auth.username) {
+      if (!nextProject) throw new HttpError('Developers cannot delete projects owned by others.', 403);
+      if (JSON.stringify(nextProject) !== JSON.stringify(existingProject)) {
+        throw new HttpError('Developers cannot edit projects owned by others.', 403);
+      }
+    }
+    if (!ownerUsername) {
+      if (!nextProject) throw new HttpError('Developers cannot delete unowned projects.', 403);
+      if (JSON.stringify(nextProject) !== JSON.stringify(existingProject)) {
+        throw new HttpError('Developers cannot edit unowned projects.', 403);
+      }
+    }
+  }
+
+  submitted.projects = submitted.projects.map(project => {
+    const existing = currentProjects.get(project.id);
+    if (existing) {
+      const ownerUsername = normalizeUsername(existing.ownerUsername);
+      if (ownerUsername === auth.username) {
+        return stampProjectOwnership(project, auth);
+      }
+      return existing;
+    }
+    return stampProjectOwnership(project, auth);
+  });
+
+  submitted.meta = current.meta || {};
+  return submitted;
+}
+
+function stampProjectOwnership(project, auth) {
+  return {
+    ...project,
+    ownerUsername: auth.username,
+    ownerDisplayName: auth.displayName || auth.username
+  };
+}
+
+async function getProjectDatabase(env) {
+  ensureKv(env);
+  const raw = await env.VISITOR_STATS.get(PROJ_DB_KEY);
+  if (raw) {
+    const parsed = JSON.parse(raw);
+    return {
+      meta: parsed && typeof parsed.meta === 'object' ? parsed.meta : {},
+      boards: Array.isArray(parsed?.boards) ? parsed.boards : [],
+      projects: Array.isArray(parsed?.projects) ? parsed.projects : []
+    };
+  }
+  return { meta: { totalVisits: 0, totalRevisits: 0, counterApiBase: '' }, boards: [], projects: [] };
+}
+
+async function saveProjectDatabase(env, db, message) {
+  ensureKv(env);
+  const normalized = {
+    meta: db && typeof db.meta === 'object' ? db.meta : {},
+    boards: Array.isArray(db?.boards) ? db.boards : [],
+    projects: Array.isArray(db?.projects) ? db.projects : []
+  };
+  await env.VISITOR_STATS.put(PROJ_DB_KEY, JSON.stringify(normalized));
+  return { ok: true };
+}
+
+async function getPendingVisitCount(env) {
+  ensureKv(env);
+  const v = Number(await env.VISITOR_STATS.get(VISITS_PENDING_KEY));
+  const r = Number(await env.VISITOR_STATS.get(REVISITS_PENDING_KEY));
+  return {
+    visits: Number.isFinite(v) && v >= 0 ? v : 0,
+    revisits: Number.isFinite(r) && r >= 0 ? r : 0
+  };
+}
+
+async function getPublicVisitTotal(env) {
+  const db = await getProjectDatabase(env);
+  const totalV = Number(db?.meta?.totalVisits || 0);
+  const totalR = Number(db?.meta?.totalRevisits || 0);
+  const pending = await getPendingVisitCount(env);
+  return {
+    visits: (Number.isFinite(totalV) ? totalV : 0) + pending.visits,
+    revisits: (Number.isFinite(totalR) ? totalR : 0) + pending.revisits
+  };
+}
+
+async function registerVisit(env, isLogin) {
+  ensureKv(env);
+  const pending = await getPendingVisitCount(env);
+  
+  if (isLogin) {
+    await env.VISITOR_STATS.put(VISITS_PENDING_KEY, String(pending.visits + 1));
+  } else {
+    await env.VISITOR_STATS.put(REVISITS_PENDING_KEY, String(pending.revisits + 1));
+  }
+
+  // To prevent KV rate limits on every hit, we sync to DB occasionally or just write pending. 
+  // For simplicity since it's a direct KV, we'll just update DB structure every 10 hits or immediately.
+  const totalPending = pending.visits + pending.revisits + 1;
+  if (totalPending > 5) {
+     const db = await getProjectDatabase(env);
+     db.meta = db.meta || {};
+     db.meta.totalVisits = (Number(db.meta.totalVisits) || 0) + pending.visits + (isLogin ? 1 : 0);
+     db.meta.totalRevisits = (Number(db.meta.totalRevisits) || 0) + pending.revisits + (!isLogin ? 1 : 0);
+     await env.VISITOR_STATS.put(PROJ_DB_KEY, JSON.stringify(db));
+     await env.VISITOR_STATS.put(VISITS_PENDING_KEY, '0');
+     await env.VISITOR_STATS.put(REVISITS_PENDING_KEY, '0');
+     return { visits: db.meta.totalVisits, revisits: db.meta.totalRevisits };
+  }
+  
+  return getPublicVisitTotal(env);
+}
+
+function ensureKv(env) {
+  if (!env.VISITOR_STATS) {
+    throw new HttpError('Cloudflare KV binding VISITOR_STATS is not configured.', 503);
+  }
+}
+
+function corsHeaders(env, request) {
+  const ALLOWED_ORIGINS = [
+    'https://jumperjunction.codes',
+    'https://prashanthg05.github.io',
+    'http://localhost',
+    'http://127.0.0.1',
+  ];
+  if (env && env.ALLOWED_ORIGIN) {
+    ALLOWED_ORIGINS.push(normalizeOrigin(env.ALLOWED_ORIGIN));
+  }
+  const requestOrigin = request ? normalizeOrigin(request.headers.get('Origin') || '') : '';
+  const matchedOrigin = ALLOWED_ORIGINS.find(o => requestOrigin && requestOrigin === normalizeOrigin(o)) || ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': matchedOrigin,
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type,X-Admin-Key,X-Site-Origin,Authorization',
+    'Vary': 'Origin'
+  };
+}
+
+function securityHeaders() {
+  return {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+    'Cross-Origin-Opener-Policy': 'same-origin',
+    'Cross-Origin-Resource-Policy': 'cross-origin',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+    'Cache-Control': 'no-store'
+  };
+}
+
+function json(data, status, env, request) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      ...securityHeaders(),
+      ...corsHeaders(env, request)
+    }
+  });
+}
+
+function encodeUtf8Base64(value) {
+  return btoa(unescape(encodeURIComponent(value)));
+}
+
+function decodeBase64Utf8(value) {
+  return decodeURIComponent(escape(atob((value || '').replace(/\n/g, ''))));
+}
+
+async function sha256(text) {
+  const bytes = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function bytesToBase64(bytes) {
+  let binary = '';
+  bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+  return btoa(binary);
+}
+
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value || {}));
+}
+
+class HttpError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.status = status;
+  }
+}

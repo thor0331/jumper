@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BYLLSY2990"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-BYLLSY2990');
+  </script>
+  <meta name="google-site-verification" content="HGNls9zIHckqixDYlmV9I-IKEdwRQBj1IWSNIQHXL0o" />
+  <title>JumperJunction — Free Online Electronics & Open Source Hardware Projects</title>
+  <meta name="description" content="Discover free online electronics projects, Arduino, ESP32, Raspberry Pi, and DIY open source hardware tutorials. Join JumperJunction for beginner-friendly coding and wiring guides.">
+  <meta name="keywords" content="jumper, jumperjunction, jumper junction, jumper junctions, jumpers junction, free online electronics projects, free electronics projects, electronics projects, open source hardware, arduino projects, esp32 projects, esp8266 projects, raspberry pi projects, iot projects, maker space, DIY electronics, coding, wiring guides, circuit building">
+  <link rel="canonical" href="https://jumperjunction.codes/" />
+  
+  <meta property="og:title" content="JumperJunction — Free Electronics Projects">
+  <meta property="og:description" content="Beginner-friendly hardware projects with wiring, code, credits, and guided build steps. Start building your DIY electronics today.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://jumperjunction.codes/">
+  <meta property="og:image" content="https://jumperjunction.codes/favicon.png">
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="JumperJunction — Free Electronics Projects">
+  <meta name="twitter:description" content="Free open source hardware projects, Arduino, ESP32, and Raspberry Pi tutorials.">
+  <meta name="twitter:image" content="https://jumperjunction.codes/favicon.png">
+  
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Instrument+Sans:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080a0f;
+      --bg2: #0d0f17;
+      --surface: #111420;
+      --surface2: #181c2a;
+      --border: #1e2235;
+      --border2: #252a3d;
+      --text: #eef3ff;
+      --muted: #99a8c7;
+      --muted2: #7382a4;
+      --green: #3dffa0;
+      --blue: #5eb8ff;
+      --amber: #ffb340;
+      --red: #ff6b7a;
+      --purple: #b57bff;
+      --cyan: #40d9f0;
+      --display: 'Syne', sans-serif;
+      --body: 'Instrument Sans', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 15px;
+      line-height: 1.6;
+      overflow-x: hidden
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit
+    }
+
+    body[data-theme="light"] {
+      --bg: #f4f7fb;
+      --bg2: #e8edf5;
+      --surface: #ffffff;
+      --surface2: #f4f7fb;
+      --border: #d7deea;
+      --border2: #bcc7d9;
+      --text: #0f1726;
+      --muted: #43516c;
+      --muted2: #62708a;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(8, 10, 15, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border)
+    }
+
+    body[data-theme="light"] nav {
+      background: rgba(244, 247, 251, 0.9)
+    }
+
+    .nav-logo {
+      font-family: var(--display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--green);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #000;
+      font-weight: 700
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem
+    }
+
+    .theme-toggle {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 7px 12px;
+      cursor: pointer;
+      transition: all 0.2s
+    }
+
+    .theme-toggle:hover {
+      color: var(--text);
+      border-color: var(--muted)
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem
+    }
+
+    .nav-links a {
+      font-size: 13px;
+      color: var(--muted);
+      transition: color 0.2s;
+      font-family: var(--mono)
+    }
+
+    /* DOCK NAVIGATION */
+    .dock-container {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      z-index: 1000;
+    }
+    .dock {
+      display: flex;
+      gap: 16px;
+      padding: 0;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      backdrop-filter: none;
+      box-shadow: none;
+    }
+    .dock-item {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), background 0.2s, color 0.2s;
+      transform: scale(var(--scale, 1)) translateY(var(--translateY, 0));
+      transform-origin: center;
+      position: relative;
+    }
+    .dock-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+    .dock-item svg { width: 18px; height: 18px; }
+    .dock-item::after {
+      content: attr(aria-label);
+      position: absolute;
+      bottom: -32px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 10px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    .dock-item:hover::after { opacity: 1; }
+
+    .nav-links a:hover {
+      color: var(--text)
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 2rem 4rem;
+      position: relative;
+      overflow: hidden;
+      text-align: center
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(62, 255, 160, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(62, 255, 160, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px
+    }
+
+    .hero-glow {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(62, 255, 160, 0.06) 0%, transparent 70%);
+      pointer-events: none
+    }
+
+    .hero-glow2 {
+      position: absolute;
+      top: 40%;
+      left: 20%;
+      width: 400px;
+      height: 300px;
+      background: radial-gradient(ellipse, rgba(94, 184, 255, 0.04) 0%, transparent 70%);
+      pointer-events: none
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 900px
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 6px 16px;
+      border: 1px solid rgba(62, 255, 160, 0.3);
+      border-radius: 20px;
+      color: var(--green);
+      margin-bottom: 2rem;
+      letter-spacing: 0.05em;
+      animation: fadeup 0.6s ease both
+    }
+
+    .hero-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.4
+      }
+    }
+
+    h1.hero-title {
+      font-family: var(--display);
+      font-size: clamp(2.8rem, 8vw, 6rem);
+      font-weight: 800;
+      line-height: 1.0;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+      animation: fadeup 0.6s 0.1s ease both;
+      opacity: 0
+    }
+
+    .hero-title .line2 {
+      color: var(--green)
+    }
+
+    .hero-title .line3 {
+      color: var(--muted);
+      font-weight: 400;
+      font-size: 0.65em
+    }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 560px;
+      margin: 0 auto 3rem;
+      animation: fadeup 0.6s 0.2s ease both;
+      opacity: 0;
+      line-height: 1.8
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeup 0.6s 0.3s ease both;
+      opacity: 0
+    }
+
+    .btn-primary {
+      padding: 14px 32px;
+      background: var(--green);
+      color: #000;
+      border-radius: 8px;
+      font-weight: 600;
+      font-family: var(--display);
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer
+    }
+
+    .btn-primary:hover {
+      background: #5affc0;
+      transform: translateY(-2px)
+    }
+
+    .btn-outline {
+      padding: 14px 32px;
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: 8px;
+      font-weight: 500;
+      font-family: var(--body);
+      font-size: 14px;
+      transition: all 0.2s
+    }
+
+    .btn-outline:hover {
+      border-color: var(--muted);
+      transform: translateY(-2px)
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 3rem;
+      justify-content: center;
+      margin-top: 4rem;
+      animation: fadeup 0.6s 0.4s ease both;
+      opacity: 0
+    }
+
+    .stat {
+      text-align: center
+    }
+
+    .stat-num {
+      font-family: var(--display);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+      margin-top: 4px
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted2);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      animation: fadeup 0.6s 0.6s ease both;
+      opacity: 0
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--muted2), transparent);
+      margin: 0 auto
+    }
+
+    @keyframes fadeup {
+      from {
+        opacity: 0;
+        transform: translateY(20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    /* BOARDS SECTION */
+    .boards-section {
+      padding: 5rem 2rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto
+    }
+
+    .section-eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--green);
+      text-transform: uppercase;
+      margin-bottom: 1rem
+    }
+
+    .section-title {
+      font-family: var(--display);
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      margin-bottom: 0.5rem
+    }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 2.5rem
+    }
+
+    .boards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 3rem
+    }
+
+    .board-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1rem;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-align: center;
+      position: relative;
+      overflow: hidden
+    }
+
+    .board-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.3s
+    }
+
+    .board-card:hover,
+    .board-card.active {
+      border-color: var(--card-color, var(--green));
+      transform: translateY(-3px)
+    }
+
+    .board-card.active::before {
+      opacity: 0.05;
+      background: var(--card-color, var(--green))
+    }
+
+    .board-icon {
+      font-size: 1.6rem;
+      margin-bottom: 0.5rem;
+      display: block
+    }
+
+    .board-name {
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text)
+    }
+
+    .board-count {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px
+    }
+
+    .board-card.active .board-name {
+      color: var(--card-color, var(--green))
+    }
+
+    /* SEARCH + FILTER BAR */
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 260px
+    }
+
+    .search-wrap input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px 10px 40px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: var(--body);
+      outline: none;
+      transition: border-color 0.2s
+    }
+
+    .search-wrap input:focus {
+      border-color: var(--border2)
+    }
+
+    .search-wrap input::placeholder {
+      color: var(--muted2)
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 15px;
+      pointer-events: none
+    }
+
+    .diff-filter {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap
+    }
+
+    .diff-btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.03em
+    }
+
+    .diff-btn:hover,
+    .diff-btn.active {
+      color: var(--text);
+      border-color: var(--muted)
+    }
+
+    .diff-btn[data-d="beginner"].active {
+      border-color: var(--green);
+      color: var(--green)
+    }
+
+    .diff-btn[data-d="intermediate"].active {
+      border-color: var(--amber);
+      color: var(--amber)
+    }
+
+    .diff-btn[data-d="funbuild"].active {
+      border-color: var(--purple);
+      color: var(--purple)
+    }
+
+    .diff-btn[data-d="pro"].active {
+      border-color: var(--red);
+      color: var(--red)
+    }
+
+    .diff-btn[data-d="complex"].active {
+      border-color: var(--cyan);
+      color: var(--cyan)
+    }
+
+    /* PROJECT CARDS */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px
+    }
+
+    .proj-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: all 0.25s;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column
+    }
+
+    .proj-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-4px);
+      background: var(--surface2)
+    }
+
+    .proj-card-top {
+      padding: 1.25rem 1.25rem 0
+    }
+
+    .proj-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem
+    }
+
+    .proj-board-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid;
+      letter-spacing: 0.05em
+    }
+
+    .diff-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 3px 10px;
+      border-radius: 20px
+    }
+
+    .diff-beginner {
+      background: rgba(61, 255, 160, 0.08);
+      color: var(--green)
+    }
+
+    .diff-intermediate {
+      background: rgba(255, 179, 64, 0.08);
+      color: var(--amber)
+    }
+
+    .diff-funbuild {
+      background: rgba(181, 123, 255, 0.08);
+      color: var(--purple)
+    }
+
+    .diff-pro {
+      background: rgba(255, 107, 122, 0.08);
+      color: var(--red)
+    }
+
+    .diff-complex {
+      background: rgba(64, 217, 240, 0.08);
+      color: var(--cyan)
+    }
+
+    .proj-card h3 {
+      font-family: var(--display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+      line-height: 1.3
+    }
+
+    .proj-card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.7
+    }
+
+    .proj-card-bottom {
+      padding: 1rem 1.25rem;
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap
+    }
+
+    .part-chip {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      color: var(--muted)
+    }
+
+    .proj-learn {
+      padding: 0 1.25rem 0.75rem;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .proj-learn::before {
+      content: '→';
+      color: var(--green)
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+      grid-column: 1/-1
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.3
+    }
+
+    /* ACCORDION */
+    .accordion { display: flex; flex-direction: column; gap: 10px; }
+    .accordion-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; cursor: pointer; user-select: none; list-style: none; }
+    .accordion-header::-webkit-details-marker { display: none; }
+    .accordion-header h3 { font-family: var(--display); font-size: 1.15rem; margin: 0; }
+    .accordion-icon { font-size: 1.6rem; color: var(--muted); font-family: var(--mono); line-height: 1; }
+    details[open] .accordion-icon { color: var(--green); }
+    details[open] .accordion-icon::before { content: "−"; }
+    details:not([open]) .accordion-icon::before { content: "+"; }
+    .accordion-content { padding: 0 1.5rem 1.5rem; border-top: 1px solid var(--border2); margin-top: 0.5rem; padding-top: 1rem; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--muted2);
+      font-size: 12px;
+      font-family: var(--mono);
+      margin-top: 6rem
+    }
+
+    footer a {
+      color: var(--muted);
+      transition: color 0.2s
+    }
+
+    footer a:hover {
+      color: var(--green)
+    }
+
+    /* LOADING */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6rem;
+      gap: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 13px;
+      grid-column: 1/-1
+    }
+
+    .loading-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: loadpulse 1.2s ease-in-out infinite
+    }
+
+    .loading-dot:nth-child(2) {
+      animation-delay: 0.2s
+    }
+
+    .loading-dot:nth-child(3) {
+      animation-delay: 0.4s
+    }
+
+    @keyframes loadpulse {
+
+      0%,
+      80%,
+      100% {
+        opacity: 0.2;
+        transform: scale(0.8)
+      }
+
+      40% {
+        opacity: 1;
+        transform: scale(1)
+      }
+    }
+
+    /* BOARD ALL */
+    .board-card[data-board="all"] .board-icon {
+      background: linear-gradient(135deg, var(--green), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent
+    }
+
+    @media(max-width:768px) {
+      .nav-actions {
+        gap: 0.6rem
+      }
+
+      .nav-links {
+        display: none
+      }
+
+      .theme-toggle {
+        padding: 7px 10px
+      }
+
+      .hero-stats {
+        gap: 1.5rem
+      }
+
+      .stat-num {
+        font-size: 1.5rem
+      }
+
+      .boards-grid {
+        grid-template-columns: repeat(3, 1fr)
+      }
+
+      .projects-grid {
+        grid-template-columns: 1fr
+      }
+
+      .filter-bar {
+        flex-direction: column;
+        align-items: stretch
+      }
+
+      .diff-filter {
+        justify-content: flex-start
+      }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://www.google.com/recaptcha/api.js?render=6LcPUe4sAAAAAHekJ7el--n1g6UsxpKeIEFtlJaK" async defer></script>
+</head>
+
+<body>
+
+  <nav>
+    <a href="https://jumperjunction.codes" class="nav-logo" style="text-decoration:none;color:inherit;">
+      <img src="favicon.svg" alt="JumperJunction logo" class="logo-icon" style="object-fit:cover;padding:0">
+      JumperJunction
+    </a>
+  </nav>
+
+  <div class="dock-container">
+    <div class="dock">
+      <button class="dock-item" aria-label="Home" onclick="location.href='index.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      </button>
+      <button class="dock-item" aria-label="About" onclick="document.getElementById('about-section').scrollIntoView({behavior:'smooth'})">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+      </button>
+      <button class="dock-item" aria-label="Projects" onclick="location.href='browse-projects/index.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      </button>
+      <button id="btn-dock-premium" class="dock-item" aria-label="Premium" onclick="location.href='browse-projects/index.html?premium=1'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.8 5.67 6.2.9-4.5 4.39 1.06 6.19L12 17.77 6.44 20.15 7.5 13.96 3 9.57l6.2-.9L12 3z"></path></svg>
+      </button>
+      <button class="dock-item" id="theme-dock-btn" aria-label="Theme" onclick="toggleTheme()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </button>
+      <button class="dock-item" id="auth-dock-btn" aria-label="Profile" onclick="openAuthMenu()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-grid"></div>
+      <div class="hero-glow"></div>
+      <div class="hero-glow2"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        Free &amp; Open Source
+      </div>
+      <h1 class="hero-title">
+        Build Real<br>
+        <span class="line2">Hardware Projects</span><br>
+        <span class="line3">From Zero to Working</span>
+      </h1>
+      <p class="hero-sub">
+        "Stop struggling – start building! Unlock foolproof code, detailed wiring diagrams, and effortless step-by-step
+        guidance for Arduino, ESP32, ESP8266, Raspberry Pi, and beyond. We provide everything you need to create, even
+        if you've never touched an electronics project before."
+      </p>
+      <div class="hero-cta">
+        <button class="btn-primary"
+          style="font-family:inherit;font-size:14px;border:none;cursor:pointer;border-radius:24px;padding:12px 24px"
+          onclick="location.href='browse-projects/index.html'">Browse Projects</button>
+        <button id="btn-hero-premium" class="btn-primary"
+          style="font-family:inherit;font-size:14px;border:none;cursor:pointer;border-radius:24px;padding:12px 24px"
+          onclick="location.href='browse-projects/index.html?premium=1'">Premium Projects</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-num" id="stat-projects">0</div>
+          <div class="stat-label">projects</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="stat-boards">0</div>
+          <div class="stat-label">boards</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">100%</div>
+          <div class="stat-label">free forever</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="stat-pageviews">0</div>
+          <div class="stat-label">total page views</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-scroll">
+      <div class="scroll-line"></div>
+      scroll
+    </div>
+  </section>
+
+  <div id="login-modal" class="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:1rem;" onclick="closeLoginModal()">
+    <div class="modal" style="background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:2rem;max-width:400px;width:100%;text-align:center" onclick="event.stopPropagation()">
+      <h3 id="login-modal-title" style="font-family:var(--display);font-size:1.3rem;font-weight:700;margin-bottom:0.5rem">Welcome to JumperJunction</h3>
+      <p id="login-modal-subtitle" style="color:var(--muted);font-size:13px;margin-bottom:1.5rem;line-height:1.8">Login or create your account to open projects, save favorites, and unlock premium downloads securely.</p>
+      
+      <!-- reCAPTCHA v3 invisible widget is used -->
+
+      <div style="display:flex;gap:8px;background:var(--surface2);border:1px solid var(--border);padding:6px;border-radius:999px;margin-bottom:1rem">
+        <button id="auth-mode-login-btn" class="btn-primary" style="flex:1;border:none;border-radius:999px;padding:10px 12px;cursor:pointer;font-weight:700" onclick="setAuthMode('login')">Login</button>
+        <button id="auth-mode-signup-btn" class="btn-outline" style="flex:1;border-radius:999px;padding:10px 12px;cursor:pointer;font-weight:700" onclick="setAuthMode('signup')">Create Account</button>
+      </div>
+      
+      <div id="email-section" style="margin-bottom:1rem;text-align:left">
+        <div id="auth-name-group" style="display:none;margin-bottom:10px">
+          <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Full Name</label>
+          <input type="text" id="auth-name" placeholder="Enter your name" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+        </div>
+        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Email Address</label>
+        <input type="email" id="auth-email" placeholder="you@example.com" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);margin-bottom:10px">
+        <div id="auth-password-group" style="margin-bottom:10px">
+          <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:6px">Password</label>
+          <div style="position:relative;">
+            <input type="password" id="auth-password" placeholder="Create a strong password" oninput="updatePasswordStrength()" style="width:100%;padding:10px;padding-right:40px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+            <button type="button" onclick="const p=document.getElementById('auth-password');p.type=p.type==='password'?'text':'password';this.innerHTML=p.type==='password'?'<svg width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><path d=\'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z\'/><circle cx=\'12\' cy=\'12\' r=\'3\'/></svg>':'<svg width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><path d=\'M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22\'/></svg>';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          </div>
+        </div>
+        <div id="password-strength-wrap" style="display:none;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px">
+            <span>Password strength</span>
+            <span id="password-strength-text">Weak</span>
+          </div>
+          <div style="height:8px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);overflow:hidden">
+            <div id="password-strength-bar" style="height:100%;width:10%;background:var(--red);transition:all .2s"></div>
+          </div>
+        </div>
+        <button id="auth-email-submit" class="btn-primary" style="width:100%;border-radius:8px;padding:10px;cursor:pointer;border:none;font-weight:600" onclick="handleEmailAuth()">Login with Email</button>
+        <button id="forgot-password-btn" class="btn-outline" style="width:100%;margin-top:8px;border-radius:8px;padding:10px;cursor:pointer;font-weight:600" onclick="sendPasswordReset()">Forgot password?</button>
+      </div>
+
+      <div id="verification-section" style="display:none;margin-bottom:1rem;text-align:center;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" style="margin-bottom:1rem">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <h3 style="font-family:var(--display);font-size:1.2rem;font-weight:700;margin-bottom:0.5rem">Check your inbox</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:1.5rem">We've sent a secure verification link to your email. Click it to verify your account.</p>
+        <button class="btn-primary" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);width:100%" onclick="location.reload()">Return to Login</button>
+      </div>
+      <div id="auth-status" style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:1rem"></div>
+      
+      <div style="color:var(--muted);font-size:12px;margin:1rem 0;display:flex;align-items:center;gap:10px">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        OR
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="btn-outline" style="width:100%;border-radius:8px;padding:10px;cursor:pointer;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px" onclick="handleOAuth('google')"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" alt="Google" style="width:18px;height:18px">Login with Google</button>
+        <button class="btn-outline" style="width:100%;border-radius:8px;padding:10px;cursor:pointer;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px" onclick="handleOAuth('github')"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub" style="width:18px;height:18px">Login with GitHub</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="auth-menu-modal" class="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:210;align-items:center;justify-content:center;padding:1rem;" onclick="closeAuthMenu()">
+    <div class="modal" style="background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:2rem;max-width:400px;width:100%;text-align:center" onclick="event.stopPropagation()">
+      <h3 id="auth-menu-title" style="font-family:var(--display);font-size:1.3rem;font-weight:700;margin-bottom:0.5rem">Account</h3>
+      <p id="auth-menu-text" style="color:var(--muted);font-size:13px;margin-bottom:1.5rem;line-height:1.8">Login with Google to get access and use the projects area.</p>
+      <div id="auth-menu-actions" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+  </div>
+
+  <div id="onboarding-modal" class="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.76);backdrop-filter:blur(5px);z-index:220;align-items:center;justify-content:center;padding:1rem" onclick="event.stopPropagation()">
+    <div class="modal" style="background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:2rem;max-width:520px;width:100%" onclick="event.stopPropagation()">
+      <h3 style="font-family:var(--display);font-size:1.35rem;margin-bottom:0.45rem">Complete your profile</h3>
+      <p style="color:var(--muted);font-size:13px;line-height:1.8;margin-bottom:1.25rem">Help us personalize JumperJunction for your learning and building journey.</p>
+      <div style="display:grid;gap:12px">
+        <div>
+          <label style="display:block;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:6px">Full name</label>
+          <input id="onboard-name" type="text" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+        </div>
+        <div>
+          <label style="display:block;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:6px">Role</label>
+          <select id="onboard-role" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+            <option value="student">Student</option>
+            <option value="lecturer">Lecturer</option>
+            <option value="professor">Professor</option>
+            <option value="hobbyist">Hobbyist</option>
+            <option value="engineer">Engineer</option>
+            <option value="maker">Maker</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:6px">Experience level</label>
+          <select id="onboard-level" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:6px">Main purpose</label>
+          <select id="onboard-purpose" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+            <option value="learning">Learning electronics</option>
+            <option value="teaching">Teaching students</option>
+            <option value="research">Research and experiments</option>
+            <option value="projects">Building projects</option>
+            <option value="community">Community sharing</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:1.4rem">
+        <button class="btn-outline" onclick="closeOnboardingModal()">Later</button>
+        <button class="btn-primary" style="border:none;cursor:pointer" onclick="saveOnboarding()">Save Profile</button>
+      </div>
+      <div id="onboarding-status" style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:0.8rem"></div>
+    </div>
+  </div>
+
+  <section id="about-section" style="max-width:800px;margin:0 auto;padding:0 2rem 4rem;">
+    <div class="accordion">
+      <details class="accordion-item">
+        <summary class="accordion-header">
+          <h3>About</h3>
+          <span class="accordion-icon"></span>
+        </summary>
+        <div class="accordion-content">
+          <div class="section-eyebrow" style="margin-bottom:0.75rem">Open hardware reference platform</div>
+          <p style="color:var(--muted);font-size:14px;line-height:1.9">JumperJunction is a public learning and build reference for electronics projects across Arduino, ESP32, ESP8266, Raspberry Pi, and related platforms. It is designed for students, educators, makers, professionals, and independent learners who want structured project guidance in one trusted place.</p>
+        </div>
+      </details>
+      <details class="accordion-item">
+        <summary class="accordion-header">
+          <h3>Privacy</h3>
+          <span class="accordion-icon"></span>
+        </summary>
+        <div class="accordion-content">
+          <div class="section-eyebrow" style="margin-bottom:0.75rem">Privacy and access handling</div>
+          <p style="color:var(--muted);font-size:14px;line-height:1.9">JumperJunction uses minimal browser storage, session-based page-view control, and domain-restricted backend access to reduce unnecessary data collection. Public usage is measured in a lightweight way without invasive tracking behavior.</p>
+        </div>
+      </details>
+      <details class="accordion-item" id="policy-section">
+        <summary class="accordion-header">
+          <h3>Usage Policy</h3>
+          <span class="accordion-icon"></span>
+        </summary>
+        <div class="accordion-content">
+          <div class="section-eyebrow" style="margin-bottom:0.75rem">Open access with non-commercial intent</div>
+          <p style="color:var(--muted);font-size:14px;line-height:1.9">The platform is intended to remain 100% free to access. Project reuse must respect creator license terms, attribution requirements, and non-commercial expectations where stated. Content review and publication aim to follow community documentation standards and responsible sharing practices.</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- CREDITS (Not a box/accordion, open by default) -->
+    <div style="margin-top:2rem;padding-top:2rem;border-top:1px solid var(--border);">
+      <h3 style="font-family:var(--display);font-size:1.15rem;margin-bottom:0.5rem;color:var(--text)">Credits</h3>
+      <p style="color:var(--muted);font-size:12px;line-height:1.7;max-width:600px;">Every shared project preserves creator attribution, source video links, and profile references. This keeps community contributions transparent and aligned with respectful documentation standards.</p>
+      <div style="margin-top:1rem;display:flex;align-items:center;gap:8px">
+        <span style="color:var(--text);font-family:var(--mono);font-size:12px;font-weight:600">PRASHANTH G</span>
+        <span style="color:var(--green);font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid rgba(61,255,160,0.3);background:rgba(61,255,160,0.1)">@FOUNDER & CEO</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>JumperJunction — Open source hardware projects for everyone &nbsp;·&nbsp; Created by PRASHANTH G</p>
+  </footer>
+
+  <script>
+    // ── CONFIG ──────────────────────────────────────────────────────────────
+    const ADMIN_SHORTCUT_URL = 'admin.html';
+    const THEME_KEY           = 'jumper-junction_theme';
+    const COUNTER_API_BASE    = 'https://jumperjunction-admin-backend.team-jumperjunction.workers.dev';
+    const SITE_SESSION_VIEW_KEY = 'jj-site-session-viewed';
+
+    const SUPABASE_URL = 'https://wbriqxebdkuqbtcvxtgv.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndicmlxeGViZGt1cWJ0Y3Z4dGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNTA4MTksImV4cCI6MjA5MTgyNjgxOX0._e1mILmLqzbAfgSsAGWzAez5v6Z7RHNR564O4yfJFN0';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let currentUser = null;
+    const AUTH_IDLE_TIMEOUT_MS = 45 * 60 * 1000;
+    let authIdleTimer = null;
+    let onboardingOpen = false;
+    let authMode = 'login';
+    let pendingSignupEmail = '';
+    let pendingSignupPassword = '';
+
+    function getCartItems() {
+      try {
+        const cart = JSON.parse(localStorage.getItem('jj_cart') || '[]');
+        return Array.isArray(cart) ? cart : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function startAuthSessionTimer() {
+      if (!currentUser) return;
+      if (authIdleTimer) clearTimeout(authIdleTimer);
+      authIdleTimer = setTimeout(async () => {
+        await supabaseClient.auth.signOut();
+        alert('Your session expired for security. Please log in again.');
+        location.reload();
+      }, AUTH_IDLE_TIMEOUT_MS);
+    }
+
+    function registerAuthActivity() {
+      if (currentUser) startAuthSessionTimer();
+    }
+
+    function setAuthStatus(message, tone = 'muted') {
+      const colors = {
+        muted: 'var(--muted)',
+        success: 'var(--green)',
+        error: 'var(--red)'
+      };
+      const node = document.getElementById('auth-status');
+      if (!node) return;
+      node.textContent = message || '';
+      node.style.color = colors[tone] || colors.muted;
+    }
+
+    function setAuthMode(mode) {
+      authMode = mode === 'signup' ? 'signup' : 'login';
+      document.getElementById('auth-name-group').style.display = authMode === 'signup' ? 'block' : 'none';
+      document.getElementById('password-strength-wrap').style.display = authMode === 'signup' ? 'block' : 'none';
+      document.getElementById('forgot-password-btn').style.display = authMode === 'signup' ? 'none' : 'block';
+      document.getElementById('otp-section').style.display = 'none';
+      document.getElementById('email-section').style.display = 'block';
+      document.getElementById('auth-email-submit').textContent = (authMode === 'signup' ? 'Create Account' : 'Login');
+      document.getElementById('login-modal-title').textContent = authMode === 'signup' ? 'Create your account' : 'Welcome back';
+      document.getElementById('login-modal-subtitle').textContent = authMode === 'signup' ? '' : 'Login with email and password or continue with Google, GitHub, or Facebook.';
+      document.getElementById('auth-mode-login-btn').className = authMode === 'login' ? 'btn-primary' : 'btn-outline';
+      document.getElementById('auth-mode-signup-btn').className = authMode === 'signup' ? 'btn-primary' : 'btn-outline';
+      setAuthStatus('');
+      updatePasswordStrength();
+    }
+
+    function updatePasswordStrength() {
+      const password = document.getElementById('auth-password')?.value || '';
+      const bar = document.getElementById('password-strength-bar');
+      const text = document.getElementById('password-strength-text');
+      if (!bar || !text) return;
+      let score = 0;
+      if (password.length >= 8) score += 1;
+      if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score += 1;
+      if (/\d/.test(password)) score += 1;
+      if (/[^A-Za-z0-9]/.test(password)) score += 1;
+      const widths = ['10%', '30%', '55%', '78%', '100%'];
+      const labels = ['Weak', 'Basic', 'Good', 'Strong', 'Very Strong'];
+      const colors = ['var(--red)', '#ff926b', 'var(--amber)', 'var(--blue)', 'var(--green)'];
+      bar.style.width = widths[Math.min(score, 4)];
+      bar.style.background = colors[Math.min(score, 4)];
+      text.textContent = labels[Math.min(score, 4)];
+    }
+
+    async function notifyWelcomeIfNeeded() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) return;
+      await fetch(`${COUNTER_API_BASE}/auth/welcome`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      }).catch(() => null);
+    }
+
+    function getPostLoginTarget(defaultTarget = 'browse-projects/') {
+      const target = sessionStorage.getItem('jj_post_login_target');
+      if (target) {
+        sessionStorage.removeItem('jj_post_login_target');
+        return target;
+      }
+      return defaultTarget;
+    }
+
+    async function getRecaptchaToken() {
+      if (typeof grecaptcha !== 'undefined') {
+         return await grecaptcha.execute('6LcPUe4sAAAAAHekJ7el--n1g6UsxpKeIEFtlJaK', {action: 'submit'});
+      }
+      return '';
+    }
+
+    async function handleAuth() {
+      if (currentUser) {
+        await supabaseClient.auth.signOut();
+        closeAuthMenu();
+        location.reload();
+      } else {
+        openLoginModal();
+      }
+    }
+
+    async function handleOAuth(provider) {
+      const token = await getRecaptchaToken();
+      if (!token) {
+        alert('Please complete the ReCAPTCHA before logging in.');
+        return;
+      }
+      sessionStorage.setItem('jj_post_login_target', location.pathname + location.search + location.hash);
+      await supabaseClient.auth.signInWithOAuth({ provider });
+    }
+
+    async function handleEmailAuth() {
+      const token = await getRecaptchaToken();
+      if (!token) {
+        alert('Please complete the ReCAPTCHA before logging in.');
+        return;
+      }
+      const email = document.getElementById('auth-email').value;
+      if (!email) return alert('Please enter an email address.');
+      const password = document.getElementById('auth-password').value;
+      if (!password) return alert('Please enter your password.');
+      try {
+        if (authMode === 'signup') {
+          const fullName = document.getElementById('auth-name').value.trim();
+          if (!fullName) return alert('Please enter your full name.');
+          
+          setAuthStatus('Sending verification code...', 'muted');
+          const res = await fetch(`${COUNTER_API_BASE}/auth/signup/request`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, fullName })
+          });
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.error || 'Failed to send OTP.');
+
+          pendingSignupEmail = email;
+          pendingSignupPassword = password;
+          document.getElementById('email-section').style.display = 'none';
+          document.getElementById('verification-section').style.display = 'block';
+          setAuthStatus('Verification code sent to your email.', 'success');
+        } else {
+          const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          await notifyWelcomeIfNeeded();
+          location.href = getPostLoginTarget(location.pathname + location.search + location.hash);
+        }
+      } catch(e) {
+        setAuthStatus(e.message || 'Authentication failed.', 'error');
+      }
+    }
+
+
+
+    async function sendPasswordReset() {
+      const email = document.getElementById('auth-email').value.trim();
+      if (!email) return alert('Enter your email address first.');
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: `${location.origin}/reset-password.html`
+      });
+      if (error) {
+        setAuthStatus(error.message, 'error');
+        return;
+      }
+      setAuthStatus('Password reset email sent. Please check your inbox.', 'success');
+    }
+
+    
+    function openLoginModal() {
+      sessionStorage.setItem('jj_post_login_target', location.pathname + location.search + location.hash);
+      location.href = 'login.html';
+    }
+
+    function closeLoginModal() {
+      document.getElementById('login-modal').style.display = 'none';
+      document.body.style.overflow = 'auto';
+      document.getElementById('otp-section').style.display = 'none';
+      document.getElementById('email-section').style.display = 'block';
+      setAuthStatus('');
+    }
+    function closeAuthMenu() {
+      document.getElementById('auth-menu-modal').style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+    function closeOnboardingModal() {
+      onboardingOpen = false;
+      document.getElementById('onboarding-modal').style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+    function shouldShowOnboarding(user) {
+      if (!user) return false;
+      const metadata = user.user_metadata || {};
+      if (metadata.jj_onboarding_complete) return false;
+      return localStorage.getItem(`jj_onboarding_done:${user.id}`) !== '1';
+    }
+    function openOnboardingModal() {
+      if (!currentUser || !shouldShowOnboarding(currentUser)) return;
+      onboardingOpen = true;
+      document.getElementById('onboarding-status').textContent = '';
+      document.getElementById('onboard-name').value = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
+      document.getElementById('onboarding-modal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+    function openAuthMenu() {
+      const modal = document.getElementById('auth-menu-modal');
+      const title = document.getElementById('auth-menu-title');
+      const text = document.getElementById('auth-menu-text');
+      const actions = document.getElementById('auth-menu-actions');
+      if (currentUser) {
+        title.textContent = 'Account';
+        text.textContent = currentUser.email ? `Signed in as ${currentUser.email}` : 'You are currently logged in.';
+        let actionsHtml = `
+          <button class="btn-primary" style="width:100%;border-radius:8px;padding:12px;cursor:pointer;border:none;font-family:inherit;font-weight:600" onclick="location.href='dashboard.html'">My Account</button>
+        `;
+        if (!window.IS_PREMIUM_LOCKED) {
+          actionsHtml += `
+            <button class="btn-primary" style="width:100%;border-radius:8px;padding:12px;cursor:pointer;border:none;font-family:inherit;font-weight:600" onclick="openCartPage()">My Cart</button>
+            <button class="btn-primary" style="width:100%;border-radius:8px;padding:12px;cursor:pointer;border:none;font-family:inherit;font-weight:600" onclick="goToCheckout()">Checkout</button>
+          `;
+        }
+        actionsHtml += `
+          <button class="btn-primary" style="width:100%;border-radius:8px;padding:12px;cursor:pointer;border:none;font-family:inherit;font-weight:600" onclick="handleAuth()">Logout</button>
+        `;
+        actions.innerHTML = actionsHtml;
+      } else {
+        openLoginModal();
+        return;
+      } modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function openCartPage() {
+      closeAuthMenu();
+      const cart = getCartItems();
+      if (!cart.length) {
+        alert('Your premium cart is empty right now.');
+        return;
+      }
+      location.href = 'checkout.html';
+    }
+
+    function goToCheckout() {
+      openCartPage();
+    }
+    async function saveOnboarding() {
+      const fullName = document.getElementById('onboard-name').value.trim();
+      const role = document.getElementById('onboard-role').value;
+      const level = document.getElementById('onboard-level').value;
+      const purpose = document.getElementById('onboard-purpose').value;
+      const status = document.getElementById('onboarding-status');
+      if (!fullName) {
+        status.textContent = 'Full name is required.';
+        status.style.color = 'var(--red)';
+        return;
+      }
+      status.textContent = 'Saving your profile...';
+      status.style.color = 'var(--muted)';
+      try {
+        const { data, error } = await supabaseClient.auth.updateUser({
+          data: {
+            full_name: fullName,
+            jj_role: role,
+            jj_level: level,
+            jj_purpose: purpose,
+            jj_onboarding_complete: true
+          }
+        });
+        if (error) throw error;
+        currentUser = data.user || currentUser;
+        localStorage.setItem(`jj_onboarding_done:${currentUser.id}`, '1');
+        status.textContent = 'Logged in successfully. Welcome to JumperJunction.';
+        status.style.color = 'var(--green)';
+        setTimeout(() => {
+          closeOnboardingModal();
+          openAuthMenu();
+        }, 900);
+      } catch (error) {
+        status.textContent = error.message || 'Could not save your profile.';
+        status.style.color = 'var(--red)';
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { closeLoginModal(); closeAuthMenu(); closeOnboardingModal(); }
+      // Admin shortcuts
+      if (!e.ctrlKey || !e.shiftKey) return;
+      if (e.key === '%' || e.key === '5' || e.code === 'Digit5') {
+        e.preventDefault();
+        location.href = ADMIN_SHORTCUT_URL + '?mode=admin';
+      } else if (e.key === '!' || e.key === '1' || e.code === 'Digit1') {
+        e.preventDefault();
+        location.href = ADMIN_SHORTCUT_URL + '?mode=developer';
+      }
+    });
+
+    async function checkAuth() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        currentUser = session.user;
+        await notifyWelcomeIfNeeded();
+        startAuthSessionTimer();
+        const quickLinks = document.getElementById('quick-links');
+        if (quickLinks) quickLinks.style.display = 'flex';
+        const btn = document.getElementById('auth-dock-btn');
+        if (btn) btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+        // If user just logged in from OAuth redirect, send them to browse-projects
+        const hash = location.hash;
+        if (hash && hash.includes('access_token')) {
+          if (shouldShowOnboarding(currentUser)) {
+            history.replaceState({}, document.title, location.pathname);
+            setTimeout(() => openOnboardingModal(), 140);
+          } else {
+            location.replace(getPostLoginTarget('browse-projects/'));
+          }
+        }
+      } else {
+        currentUser = null;
+        const quickLinks = document.getElementById('quick-links');
+        if (quickLinks) quickLinks.style.display = 'none';
+        const btn = document.getElementById('auth-dock-btn');
+        if (btn) btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+      }
+    }
+
+    // ── Stat counters (visits) ────────────────────────────────────────────────
+    function formatCount(v) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return '0';
+      return n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K' : n.toString();
+    }
+
+    const PROJECTS_ARCHIVE_PATHS = [
+      'New%20folder%20(6)/projects.json',
+      'projects.json',
+      'New%20folder/projects.json'
+    ];
+
+    async function fetchArchiveData() {
+      for (const path of PROJECTS_ARCHIVE_PATHS) {
+        try {
+          const res = await fetch(`${path}?t=${Date.now()}`, { cache: 'no-store' });
+          if (res.ok) return await res.json();
+        } catch (e) { }
+      }
+      return { meta: { totalVisits: 0, counterApiBase: '' }, boards: [], projects: [] };
+    }
+
+    async function initVisitorStats() {
+      try {
+        const res = await fetch(`${COUNTER_API_BASE}/visits`, { cache: 'no-store' });
+        if (res.ok) {
+          const d = await res.json();
+          const sp = document.getElementById('stat-pageviews');
+          if (sp) sp.textContent = formatCount(d.revisits || d.value || 0);
+        }
+      } catch (e) { /* silently ignore — counter backend not configured yet */ }
+    }
+
+    async function hitCounter(isLogin = false) {
+      try {
+        const res = await fetch(`${COUNTER_API_BASE}/visits/hit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isLogin }),
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const d = await res.json();
+          const sp = document.getElementById('stat-pageviews');
+          if (sp) sp.textContent = formatCount(d.revisits || d.value || 0);
+        }
+      } catch (e) { /* silently ignore */ }
+    }
+
+    function mergeProjectData(staticData, liveData) {
+      const fileData = staticData && typeof staticData === 'object' ? staticData : {};
+      const dbData = liveData && typeof liveData === 'object' ? liveData : {};
+      const boardMap = new Map();
+      const projectMap = new Map();
+      (Array.isArray(fileData.boards) ? fileData.boards : []).forEach(board => boardMap.set(board.id, board));
+      (Array.isArray(dbData.boards) ? dbData.boards : []).forEach(board => boardMap.set(board.id, board));
+      (Array.isArray(fileData.projects) ? fileData.projects : []).forEach(project => projectMap.set(project.id, project));
+      (Array.isArray(dbData.projects) ? dbData.projects : []).forEach(project => projectMap.set(project.id, project));
+      return {
+        boards: Array.from(boardMap.values()),
+        projects: Array.from(projectMap.values()).filter(p => !p.locked)
+      };
+    }
+
+    // ── Project & board counts (loaded from GitHub projects.json) ────────────
+    async function loadStatCounts() {
+      try {
+        const [fileRes, dbRes] = await Promise.all([
+          fetchArchiveData(),
+          fetch(`${COUNTER_API_BASE}/projects/public`, { cache: 'no-store' }).catch(() => null)
+        ]);
+        const fileData = fileRes || { boards: [], projects: [] };
+        const dbPayload = dbRes && dbRes.ok ? await dbRes.json() : { db: { boards: [], projects: [] } };
+        const data = mergeProjectData(fileData, dbPayload.db || {});
+        const sp = document.getElementById('stat-projects');
+        const sb = document.getElementById('stat-boards');
+        if (sp && Array.isArray(data.projects)) {
+          let c = 0, target = data.projects.length;
+          const t = setInterval(() => { c = Math.min(c + Math.ceil(target / 30), target); sp.textContent = c; if (c >= target) clearInterval(t); }, 40);
+        }
+        if (sb && Array.isArray(data.boards)) {
+          let c = 0, target = data.boards.length;
+          const t = setInterval(() => { c = Math.min(c + Math.ceil(target / 30), target); sb.textContent = c; if (c >= target) clearInterval(t); }, 40);
+        }
+      } catch (e) { /* silently ignore */ }
+    }
+
+    function applyTheme(theme) {
+      const t = theme === 'light' ? 'light' : 'dark';
+      document.body.dataset.theme = t;
+      localStorage.setItem('jumper-junction_theme', t);
+      const tog = document.getElementById('theme-toggle');
+      if (tog) tog.textContent = `Theme: ${t === 'light' ? 'Light' : 'Dark'}`;
+    }
+
+    function toggleTheme() {
+      applyTheme(document.body.dataset.theme === 'light' ? 'dark' : 'light');
+    }
+
+    // ── Boot ────────────────────────────────────────────────────────────────
+    async function boot() {
+      applyTheme(localStorage.getItem('jumper-junction_theme') || 'dark');
+      await checkAuth();
+
+      // Check global settings for Premium Lock
+      try {
+        const res = await fetch(`${COUNTER_API_BASE}/settings`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.settings && data.settings.premiumLocked) {
+            window.IS_PREMIUM_LOCKED = true;
+            const dockBtn = document.getElementById('btn-dock-premium');
+            const heroBtn = document.getElementById('btn-hero-premium');
+            if (dockBtn) dockBtn.style.display = 'none';
+            if (heroBtn) heroBtn.style.display = 'none';
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load global settings', e);
+      }
+
+      if (currentUser && shouldShowOnboarding(currentUser) && !onboardingOpen) {
+        setTimeout(() => openOnboardingModal(), 120);
+      } else if (!currentUser && !sessionStorage.getItem('jj_login_prompt_shown')) {
+        sessionStorage.setItem('jj_login_prompt_shown', '1');
+        setTimeout(() => openLoginModal(), 3000);
+      }
+      await initVisitorStats();
+      if (!sessionStorage.getItem(SITE_SESSION_VIEW_KEY)) {
+        sessionStorage.setItem(SITE_SESSION_VIEW_KEY, '1');
+        hitCounter(false);
+      }
+      loadStatCounts();
+
+      // Dock magnification
+      document.querySelectorAll('.dock-item').forEach(item => {
+        item.addEventListener('mousemove', e => {
+          const rect = item.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const distance = Math.abs(x - rect.width / 2);
+          const scale = 1 + (1 - distance / rect.width) * 0.4;
+          item.style.setProperty('--scale', scale > 1 ? scale : 1);
+          item.style.setProperty('--translateY', scale > 1 ? `-${(scale-1)*10}px` : '0px');
+        });
+        item.addEventListener('mouseleave', () => {
+          item.style.setProperty('--scale', 1);
+          item.style.setProperty('--translateY', '0px');
+        });
+      });
+    }
+
+    boot();
+    ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'].forEach(eventName => {
+      document.addEventListener(eventName, registerAuthActivity, { passive: true });
+    });
+    window.addEventListener('pageshow', e => { if (e.persisted) boot(); });
+  </script>
+<script src="uiverse-buttons.js"></script>
+</body>
+
+</html>

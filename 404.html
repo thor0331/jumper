@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page Not Found — JumperJunction</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+  @import url("https://fonts.googleapis.com/css?family=Montserrat:400,400i,700");
+
+  :root {
+    --bg: #080a0f;
+    --ghost: #3dffa0;
+    --heading: #e2e8f8;
+    --text: #8b94b1;
+  }
+  html[data-theme="light"] {
+    --bg: #f4f7fb;
+    --ghost: #10b981;
+    --heading: #0f172a;
+    --text: #64748b;
+  }
+
+  *, *:after, *:before {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: var(--bg);
+    font-family: 'Montserrat', system-ui, sans-serif;
+    margin: 0;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  main {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  h1 {
+    color: var(--heading);
+    font-size: clamp(6rem, 20vw, 12.5rem);
+    letter-spacing: .10em;
+    margin: .025em 0;
+    text-shadow: .05em .05em 0 rgba(0,0,0,.15);
+    white-space: nowrap;
+  }
+  
+  h1 > span {
+    animation: spooky 2s alternate infinite linear;
+    color: var(--ghost);
+    display: inline-block;
+  }
+
+  h2 {
+    color: var(--heading);
+    margin-bottom: .40em;
+    font-size: clamp(1.2rem, 4vw, 2rem);
+  }
+
+  p {
+    color: var(--text);
+    margin-top: 0;
+    margin-bottom: 2rem;
+    font-size: clamp(0.9rem, 3vw, 1.1rem);
+  }
+
+  .back-btn {
+    display: inline-block;
+    padding: 1rem 1.5rem;
+    border-radius: 999px;
+    background: var(--ghost);
+    color: #000;
+    text-decoration: none;
+    font-weight: 700;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-size: 0.95rem;
+  }
+
+  .back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(61, 255, 160, 0.2);
+  }
+
+  @keyframes spooky {
+    from {
+      transform: translatey(.15em) scaley(.95);
+    }
+    to {
+      transform: translatey(-.15em);
+    }
+  }
+</style>
+<script>
+  // Apply theme immediately to prevent flash
+  const theme = localStorage.getItem('jumper-junction_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+</script>
+</head>
+<body>
+  <main>
+    <h1>4<span><i class="fas fa-ghost"></i></span>4</h1>
+    <h2>Error: 404 page not found</h2>
+    <p>Sorry, the page you're looking for cannot be accessed or is locked.</p>
+    <a href="index.html" class="back-btn">Back to JumperJunction</a>
+  </main>
+<script src="uiverse-buttons.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+name = "jumperjunction-admin-backend"
+main = "worker.js"
+compatibility_date = "2026-04-05"
+
+[vars]
+ALLOWED_ORIGIN = "https://jumperjunction.codes"
+
+# Bind your KV namespace after creating it in Cloudflare:
+[[kv_namespaces]]
+binding = "VISITOR_STATS"
+id = "128ed3747adf48a883e8d5deb4848bef"
